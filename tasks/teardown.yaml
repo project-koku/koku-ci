@@ -8,27 +8,35 @@ spec:
       type: string
       description: The container Bonfire image to use for the tekton tasks
       default: quay.io/redhat-user-workloads/hcc-devprod-tenant/hcc-cicd-tools/cicd-tools:eb1904eafc2d8af8a26b435de393d4776d9db2f6
+
     - name: NS
       type: string
       description: Namespace name to release
+
     - name: NS_REQUESTER
       type: string
       description: The name of the person/pipeline that requested the namespace
+
     - name: EPHEMERAL_ENV_PROVIDER_SECRET
       type: string
       default: ephemeral-env-provider
       description: "Secret for connecting to ephemeral env provider cluster"
+
     - name: AWS_SECRET
       type: string
       default: rh-artifacts-bucket
       description: Secret with connection details to S3
+
     - name: ARTIFACTS_KEY
       description: The name of the artifacts directory to upload to S3
+
   results:
     - name: ARTIFACTS_URL
+
   volumes:
     - name: artifacts
       emptyDir: {}
+
   steps:
     - name: collect-logs
       image: "$(params.BONFIRE_IMAGE)"
@@ -38,50 +46,64 @@ spec:
             secretKeyRef:
               name: $(params.EPHEMERAL_ENV_PROVIDER_SECRET)
               key: token
+
         - name: OC_LOGIN_SERVER
           valueFrom:
             secretKeyRef:
               name: $(params.EPHEMERAL_ENV_PROVIDER_SECRET)
               key: url
+
         - name: BONFIRE_BOT
           value: "true"
+
       onError: continue
+
       volumeMounts:
         - name: artifacts
           mountPath: /artifacts
+
       script: |
         #!/bin/bash
         set -ex
-        
+
         echo "Connecting to the ephemeral namespace cluster"
         login.sh
 
         echo "Collecting logs"
         collect-logs.sh "$(params.NS)" /artifacts || :
         minio-collect.sh "$(params.NS)" /artifacts
+
     - name: upload-artifacts-to-s3
       image: "$(params.BONFIRE_IMAGE)"
       env:
+
         - name: AWS_ACCESS_KEY_ID
           valueFrom:
             secretKeyRef:
               name: $(params.AWS_SECRET)
               key: aws_access_key_id
+
         - name: AWS_SECRET_ACCESS_KEY
           valueFrom:
             secretKeyRef:
               name: $(params.AWS_SECRET)
               key: aws_secret_access_key
+
         - name: AWS_DEFAULT_REGION
           value: us-east-1
+
         - name: BUCKET
           value: rh-artifacts-bucket
+
         - name: ARTIFACTS_KEY
           value: $(params.ARTIFACTS_KEY)
+
       onError: continue
+
       volumeMounts:
         - name: artifacts
           mountPath: /artifacts
+
       script: |
         #!/bin/bash
         set -ex
@@ -97,17 +119,20 @@ spec:
             secretKeyRef:
               name: $(params.EPHEMERAL_ENV_PROVIDER_SECRET)
               key: token
+
         - name: OC_LOGIN_SERVER
           valueFrom:
             secretKeyRef:
               name: $(params.EPHEMERAL_ENV_PROVIDER_SECRET)
               key: url
+
         - name: BONFIRE_BOT
           value: "true"
+
       script: |
         #!/bin/bash
         set -ex
-        
+
         echo "Connecting to the ephemeral namespace cluster"
         login.sh
 
