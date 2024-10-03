@@ -134,6 +134,15 @@ spec:
         echo "Connecting to the ephemeral namespace cluster"
         login.sh
 
+        oc get secret/koku-aws -o json -n ephemeral-base | jq -r '.data' > aws-creds.json
+        oc get secret/koku-gcp -o json -n ephemeral-base | jq -r '.data' > gcp-creds.json
+        oc get secret/koku-oci -o json -n ephemeral-base | jq -r '.data' > oci-creds.json
+
+        AWS_CREDENTIALS_EPH=$(jq -r '."aws-credentials"' < aws-creds.json)
+        GCP_CREDENTIALS_EPH=$(jq -r '."gcp-credentials"' < gcp-creds.json)
+        OCI_CREDENTIALS_EPH=$(jq -r '."oci-credentials"' < oci-creds.json)
+        OCI_CONFIG_EPH=$(jq -r '."oci-config"' < oci-creds.json)
+
         echo "deploying to ephemeral"
         if [ -z "${EXTRA_DEPLOY_ARGS}" ]; then
           EXTRA_DEPLOY_ARGS="$(parse-snapshot.py)"
