@@ -161,6 +161,8 @@ spec:
         #!/bin/bash
         set -ex
 
+        env
+
         echo "Connecting to the ephemeral namespace cluster"
         login.sh
 
