@@ -190,6 +190,18 @@ spec:
             value: tasks/teardown.yaml
 
   tasks:
+    - name: testing
+      taskSpec:
+        steps:
+          - name: testing
+            image: registry.access.redhat.com/ubi9:latest
+            onError: continue
+            script: |
+              #!/usr/bin/bash
+
+              echo Testing
+              env
+
     - name: reserve-namespace
       params:
         - name: NS_REQUESTER
