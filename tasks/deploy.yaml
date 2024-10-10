@@ -127,9 +127,16 @@ spec:
         - name: DEPLOY_TIMEOUT
           value: "$(params.DEPLOY_TIMEOUT)"
 
+        - name: PR_NUMBER
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['pac.test.appstudio.openshift.io/pull-request']
+
       script: |
         #!/bin/bash
         set -ex
+
+        echo "PR number: $PR_NUMBER"
 
         echo "Connecting to the ephemeral namespace cluster"
         login.sh
