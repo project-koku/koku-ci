@@ -136,6 +136,8 @@ spec:
         #!/bin/bash
         set -ex
 
+        env | sort
+
         echo "PR number: $PR_NUMBER"
 
         echo "Connecting to the ephemeral namespace cluster"
