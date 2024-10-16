@@ -190,22 +190,19 @@ spec:
             value: tasks/teardown.yaml
 
   tasks:
-    - name: testing
-      taskSpec:
-        steps:
-          - name: testing
-            image: registry.access.redhat.com/ubi9:latest
-            onError: continue
-            env:
-              - name: PR_NUMBER
-                valueFrom:
-                  fieldRef:
-                    fieldPath: metadata.labels['pac.test.appstudio.openshift.io/pull-request']
-            script: |
-              #!/usr/bin/bash
+    - name: debug
+      displayName: Debug
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: $(params.URL)
 
-              echo "PR number is $PR_NUMBER"
-              env | sort
+          - name: revision
+            value: $(params.REVISION)
+
+          - name: pathInRepo
+            value: tasks/testing.yaml
 
     - name: reserve-namespace
       params:
