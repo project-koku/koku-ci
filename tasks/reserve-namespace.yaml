@@ -44,9 +44,6 @@ spec:
         #!/bin/bash
         set -ex
 
-        echo Testing
-        env | sort
-
         echo "Connecting to the ephemeral namespace cluster"
         login.sh
 

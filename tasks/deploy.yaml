@@ -110,7 +110,6 @@ spec:
 
         - name: COMPONENTS_W_RESOURCES
           value: $(params.COMPONENTS_W_RESOURCES)
-        # String interpolation is easier when injecting the SNAPSHOT to an env var.
 
         - name: SNAPSHOT
           value: $(params.SNAPSHOT)
@@ -126,6 +125,30 @@ spec:
 
         - name: DEPLOY_TIMEOUT
           value: "$(params.DEPLOY_TIMEOUT)"
+
+        - name: AWS_CREDENTIALS_EPH
+          valueFrom:
+            secretKeyRef:
+              name: ephemeral-env-credentials
+              key: aws
+
+        - name: GCP_CREDENTIALS_EPH
+          valueFrom:
+            secretKeyRef:
+              name: ephemeral-env-credentials
+              key: gcp
+
+        - name: OCI_CREDENTIALS_EPH
+          valueFrom:
+            secretKeyRef:
+              name: ephemeral-env-credentials
+              key: oci
+
+        - name: OCI_CONFIG_EPH
+          valueFrom:
+            secretKeyRef:
+              name: ephemeral-env-credentials
+              key: oci_config
 
         - name: PR_NUMBER
           valueFrom:
