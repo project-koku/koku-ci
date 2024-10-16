@@ -5,6 +5,10 @@ metadata:
   name: debug
 
 spec:
+  params:
+    - name: SNAPSHOT
+      type: string
+
   steps:
     - name: show-some-things
       image: registry.access.redhat.com/ubi9:latest
@@ -15,8 +19,10 @@ spec:
             fieldRef:
               fieldPath: metadata.labels['pac.test.appstudio.openshift.io/pull-request']
 
+        - name: SNAPSHOT
+          value: $(params.SNAPSHOT)
+
       script: |
         #!/usr/bin/bash
 
-        echo "PR number is $PR_NUMBER"
         env | sort
