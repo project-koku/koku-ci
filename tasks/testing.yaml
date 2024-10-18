@@ -6,12 +6,19 @@ metadata:
 
 spec:
   params:
+    params:
+    - name: BONFIRE_IMAGE
+      type: string
+
     - name: SNAPSHOT
+      type: string
+
+    - name: REF_ENV
       type: string
 
   steps:
     - name: show-some-things
-      image: registry.access.redhat.com/ubi9:latest
+      image: $(params.BONFIRE_IMAGE)
       onError: continue
       env:
         - name: PR_NUMBER
@@ -22,7 +29,12 @@ spec:
         - name: SNAPSHOT
           value: $(params.SNAPSHOT)
 
+        - name: REF_ENV
+          value: $(params.REF_ENV)
+
+
       script: |
         #!/usr/bin/bash
 
         env | sort
+        cat /usr/local/bin/deploy.py
