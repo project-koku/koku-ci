@@ -126,26 +126,6 @@ spec:
             value: tasks/teardown.yaml
 
   tasks:
-    - name: debug
-      params:
-        - name: SNAPSHOT
-          value: $(params.SNAPSHOT)
-
-        - name: BONFIRE_IMAGE
-          value: $(params.BONFIRE_IMAGE)
-
-      taskRef:
-        resolver: git
-        params:
-          - name: url
-            value: $(params.URL)
-
-          - name: revision
-            value: $(params.REVISION)
-
-          - name: pathInRepo
-            value: tasks/testing.yaml
-
     - name: reserve-namespace
       params:
         - name: NS_REQUESTER
