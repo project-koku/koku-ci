@@ -6,7 +6,6 @@ metadata:
 
 spec:
   params:
-    params:
     - name: BONFIRE_IMAGE
       type: string
 
