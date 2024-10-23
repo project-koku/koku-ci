@@ -154,6 +154,11 @@ spec:
       description: "Deploy timeout"
       default: "900"
 
+    - name: REF_ENV
+      type: string
+      description:
+      default: "insights-production"
+
   results:
     - name: ARTIFACTS_URL
       description: URL for the test's artifacts
@@ -197,6 +202,9 @@ spec:
 
         - name: BONFIRE_IMAGE
           value: "$(params.BONFIRE_IMAGE)"
+
+        - name: REF_ENV
+          value: $(params.REF_ENV)
 
       taskRef:
         resolver: git
