@@ -159,9 +159,9 @@ spec:
 
       script: |
         #!/bin/bash
-        set -ex
-
         env | sort
+
+        set -ex
 
         echo "Connecting to the ephemeral namespace cluster"
         login.sh
