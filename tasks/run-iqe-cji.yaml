@@ -62,7 +62,7 @@ spec:
     - name: IQE_CJI_TIMEOUT
       type: string
       description: This is the time to wait for smoke test to complete or fail
-      default: 30m
+      default: 30min
 
     - name: IQE_ENV
       type: string
