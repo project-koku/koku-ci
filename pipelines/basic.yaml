@@ -263,6 +263,9 @@ spec:
         - name: BONFIRE_COMPONENT_NAME
           value: "$(params.BONFIRE_COMPONENT_NAME)"
 
+        - name: COMPONENT_NAME
+          value: $(params.COMPONENT_NAME)
+
         - name: COMPONENTS
           value: "$(params.COMPONENTS)"
 
