@@ -109,11 +109,14 @@ spec:
               name: $(params.EPHEMERAL_ENV_PROVIDER_SECRET)
               key: url
 
-        - name: COMPONENT_NAME
-          value: $(params.COMPONENT_NAME)
+        - name: BONFIRE_BOT
+          value: "true"
 
         - name: BONFIRE_COMPONENT_NAME
           value: $(params.BONFIRE_COMPONENT_NAME)
+
+        - name: COMPONENT_NAME
+          value: $(params.COMPONENT_NAME)
 
         - name: IQE_PLUGINS
           value: $(params.IQE_PLUGINS)
@@ -154,8 +157,10 @@ spec:
         - name: IQE_IBUTSU_SOURCE
           value: $(params.IQE_IBUTSU_SOURCE)
 
-        - name: BONFIRE_BOT
-          value: "true"
+        - name: PR_NUMBER
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['pac.test.appstudio.openshift.io/pull-request']
 
       script: |
         #!/bin/bash
