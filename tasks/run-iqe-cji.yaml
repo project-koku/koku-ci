@@ -167,4 +167,4 @@ spec:
         login.sh
 
         echo "Deploying the IQE CJI test"
-        deploy-iqe-cji.sh "$(params.NS)" "$(params.NS_REQUESTER)"
+        deploy-iqe-cji.py "$(params.NS)" "$(params.NS_REQUESTER)"
