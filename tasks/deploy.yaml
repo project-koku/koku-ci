@@ -157,8 +157,6 @@ spec:
 
       script: |
         #!/bin/bash
-        env | sort
-
         set -ex
 
         echo "Connecting to the ephemeral namespace cluster"
