@@ -1,111 +1,78 @@
-# Insights Integration Test in Tekton for Konflux
+# Koku CI #
 
-This repository has a Tekton pipeline, and its tasks, made based on the way the tests are currently done with Clowder and Bonfire with the purpose of integrating them with Konflux.
+[Tekton pipelines and tasks] for running [koku] integration tests in Konflux.
 
-For more information about how tests are currently handled, see this [repo](https://github.com/RedHatInsights/cicd-tools).
+The tasks are run inside [koku-test-container] which contains the programs referenced in each task.
 
-## How to use
+### Pipelines ###
 
-### Prerequisites
+#### Parameters ####
 
-* Access to Konflux. Join the wailist [here](https://console.redhat.com/preview/hac/application-pipeline) and ask for access in the [#konflux-users](https://redhat-internal.slack.com/archives/C04PZ7H0VA8) slack channel.
-* Application in Konflux already created. You can follow the instructions in the Konflux [docs](https://redhat-appstudio.github.io/docs.appstudio.io/Documentation/main/getting-started/get-started/#creating-your-first-application). Access Konflux [here](https://console.redhat.com/preview/hac/application-pipeline).
-> **IMPORTANT:** The name of the Konflux Component must be the same name of the `COMPONENT_NAME` parameter in the Integration Test Scenario below.
-* Kustomize installed in your computer. Follow the instalations [intructions](https://kubectl.docs.kubernetes.io/installation/kustomize/).
+`URL` - Git repository containing the pipelines and tasks<br/>
+`REVISION` - Branch of the repository<br/>
+`BONFIRE_IMAGE` - Container image used for running tatks<br/>
 
-### Add the Integration Test Scenario to your application
+`APP_NAME` - Name of the app-sre application folder<br/>
+`BONFIRE_COMPONENT_NAME` - Name of the app-sre component <br/>
+`COMPONENT_NAME` - Name of the app-sre ResourceTemplate for this component<br/>
+`COMPONENTS_W_RESOURCES` - Components that should not have their resource request removed<br/>
+`COMPONENTS` - Space separated list of components to deploy<br/>
+`DEPLOY_FRONTENDS` - `true` or `false`<br/>
+`DEPLOY_TIMEOUT` - [fuzzy date] value to wait before killing the deployment<br/>
+`EXTRA_DEPLOY_ARGS`<br/>
+`IQE_CJI_TIMEOUT`<br/>
+`IQE_ENV`<br/>
+`IQE_FILTER_EXPRESSION`<br/>
+`IQE_IBUTSU_SOURCE`<br/>
+`IQE_MARKER_EXPRESSION`<br/>
+`IQE_PARALLEL_ENABLED`<br/>
+`IQE_PARALLEL_WORKER_COUNT`<br/>
+`IQE_PLUGINS`<br/>
+`IQE_REQUIREMENTS_PRIORITY`<br/>
+`IQE_REQUIREMENTS`<br/>
+`IQE_RP_ARGS`<br/>
+`IQE_SELENIUM`<br/>
+`IQE_TEST_IMPORTANCE`<br/>
+`REF_ENV`<br/>
+`SNAPSHOT`<br/>
 
-To add the Integration Test Scenario to Konflux, you need to follow these next steps:
+#### basic_no_iqe ####
 
-1. Clone the konflux-release-data [repo](https://gitlab.cee.redhat.com/releng/konflux-release-data.git)
-2. In case there is still not a directory for your tenant in the repo you just forked, you will need to create one under the directory `tenants-config/cluster/<your-cluster>/tenants/<your-workspace-name>-tenant`.
-> **NOTE:** The Konflux workspace is where you are deploying your applications on Konflux. It can be found in the Konflux UI, on the top left corner of the Applications page, just next to the `WS` letters. If you don't know, which cluster you should use, visit this [link](https://gitlab.cee.redhat.com/konflux/docs/users/-/blob/main/topics/overview/deployments.md?ref_type=heads).
-3. Create your Integration Test Scenario in that directory, name it `<your-konflux-application-name>-bonfire-tekton.yaml`. You will need to use the same values you are currently using in your `pr_check.sh`. Remove the lines of the ones that you want to keep the default value. Remove parameters which are not in use (remove both: name and value). Use the following template for that:
-```yaml
-apiVersion: appstudio.redhat.com/v1beta1
-kind: IntegrationTestScenario
-metadata:
-  labels:
-    test.appstudio.openshift.io/optional: "false" # Change to "true" if you don't need the test to be mandatory
-  name: <name-of-your-konflux-application>-bonfire-tekton
-  namespace: <your-workspace-name>-tenant
-spec:
-  application: <name-of-your-konflux-application>
-  resolverRef:
-    params:
-    - name: url
-      value: https://github.com/RedHatInsights/bonfire-tekton.git
-    - name: revision
-      value: main # Or whatever branch you want to test
-    - name: pathInRepo
-      value: pipelines/basic.yaml # If you have no IQE tests, change this to pipelines/basic_no_iqe.yaml
-    resolver: git
-  params:
-    - name: APP_NAME
-      value: # Name of app-sre "application" folder this component lives in.
-    - name: COMPONENTS
-      value: # Space-separated list of components to load.
-    - name: COMPONENTS_W_RESOURCES
-      value: # List of components to keep.
-    - name: BONFIRE_COMPONENT_NAME
-      value: # Name of app-sre "resourceTemplate" in deploy.yaml for this component. If it is the same as the name in Konflux, you don't need to fill this  
-    - name: COMPONENT_NAME
-      value: # Name of your component name in Konflux
-    - name: EXTRA_DEPLOY_ARGS
-      value: # Extra arguments for the deployment
-    - name: IQE_PLUGINS
-      value: # Name of the IQE plugin for this app. NOTE: this should be "" if you have no IQE tests.
-    - name: IQE_MARKER_EXPRESSION
-      value: # This is the value passed to pytest -m. Default is ""
-    - name: IQE_FILTER_EXPRESSION
-      value: # This is the value passed to pytest -k. Default is "" when no filter desired
-    - name: IQE_REQUIREMENTS
-      value: # "something,something_else" -- iqe requirements filter. Default is "" when no filter desired
-    - name: IQE_REQUIREMENTS_PRIORITY
-      value: # "something,something_else" -- iqe requirements priority filter. Default is "" when no filter desired
-    - name: IQE_TEST_IMPORTANCE
-      value: # "something,something_else" -- iqe test importance filter. Default is "" when no filter desired
-    - name: IQE_CJI_TIMEOUT
-      value: # Timeout value to pass to 'oc wait', should be slightly higher than expected test run time. Default is 30m
-    - name: IQE_ENV
-      value: # "something" -- value to set for ENV_FOR_DYNACONF. Default is "clowder_smoke"
-    - name: IQE_SELENIUM
-      value: # Whether to run IQE pod with a selenium container. Default is "false"
-    - name: IQE_PARALLEL_ENABLED
-      value: # Whether to run IQE in parallel mode. Default is "false"
-    - name: IQE_PARALLEL_WORKER_COUNT
-      value: # The number of parallel workers to use. Default is "".
-    - name: IQE_RP_ARGS
-      value: # Arguments to send to reportportal. Default is "".
-    - name: IQE_IBUTSU_SOURCE
-      value: # Ibutsu source for the current run. Default is "".
-    - name: DEPLOY_TIMEOUT
-      value: # Deploy timeout. Default is "900"
-```
-> **NOTE:** You can fork the pipeline from https://github.com/RedHatInsigths/bonfire-tekton in order to customize it. In case you do it, you will need to change the `url` field in the `IntegrationTestScenario`.
-4. Add the following `kustomization.yaml` file in the same directory:
-```yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - <your-konflux-application-name>-bonfire-tekton.yaml
-  - ../../../../lib/consoledot-test-pipeline
-namespace: <your-workspace-name>-tenant
-```
-5. Run the `build-manifests.sh`. This is script is using [Kustomize](https://kustomize.io/) to generate the Integration Test Scenario and secrets you will need to run the pipeline in the cluster. Check that the `auto-generated` directory is updated with these files. 
-6. Commit your directory and the `auto-generated` directory.
-7. Create a PR from your fork, and ask for approval in the [#konflux-users](https://redhat-internal.slack.com/archives/C04PZ7H0VA8) Slack channel.
+`URL` - Git repository containing the pipelines and tasks<br/>
+`REVISION` - Branch of the repository<br/>
+`BONFIRE_IMAGE` - Container image used for running tatks<br/>
 
-After the approval and merge of the PR, your integration test should be available in the "Integration tests" tab of your application in your Konflux workspace. Remember that to be able of running it, you will need to trigger a new build by making a change on your repository and creating a PR.
+`APP_NAME` - Name of the app-sre application folder<br/>
+`BONFIRE_COMPONENT_NAME` - Name of the app-sre component <br/>
+`COMPONENT_NAME` - Name of the app-sre ResourceTemplate for this component<br/>
+`COMPONENTS_W_RESOURCES` - Components that should not have their resource request removed<br/>
+`COMPONENTS` - Space separated list of components to deploy<br/>
+`DEPLOY_FRONTENDS` - `true` or `false`<br/>
+`DEPLOY_TIMEOUT` - [fuzzy date] value to wait before killing the deployment<br/>
+`EXTRA_DEPLOY_ARGS`<br/>
+`SNAPSHOT`<br/>
 
-## What if we don't have IQE tests?
+- Only runs `bonfire deploy`.
 
-If you have no IQE tests, ensure that your `IQE_PLUGINS` value is set to `""`. You must also set the `pathInRepo` to be `pipelines/basic_no_iqe.yaml`. A [working example can be found](https://gitlab.cee.redhat.com/releng/konflux-release-data/-/blob/main/tenants-config/cluster/stone-prd-rh01/tenants/hcc-platex-services-tenant/quickstarts.bonfire-tekton.yaml?ref_type=heads) in Gitlab.
+#### basic ####
 
-## Customizing the pipeline
+- Runs `bonfire deploy` then runs IQE tests
+- The IQE filter and marker are determined by the labels set on the PR
+- If the `ok-to-skip-smokes` label is set on a PR, IQE tests will **not** run
 
-If you need to add new tasks in between the ones already in the pipeline, remove or edit the ones already there, you will need to customize the pipeline itself. For that, the first step is to fork this repository.
+### Tasks ###
 
-After that, you can add all the tasks you want on the `tasks` directory and create a new pipeline on the `pipelines` directory. We are using Tekton, so for more information on how to create tasks or pipelines, follow their [documentation](https://tekton.dev/docs/). 
+#### deploy ####
 
-To use the pipeline, you can follow the same steps in the [How to use](./README.md#how-to-use) heading. Just make sure to change the references to the pipeline inside the `.spec.resolverRef` to yours.
+#### reserve-namespace ####
+
+#### run-iqe-cji ####
+
+#### teardown ####
+
+
+
+[Tekton pipelines and tasks]: https://tekton.dev/docs/pipelines/
+[koku]: https://github.com/project-koku/koku
+[koku-test-container]: https://github.com/project-koku/koku-test-container
+[fuzzy date]: https://pypi.org/project/fuzzy-date/
