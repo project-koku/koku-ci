@@ -96,49 +96,6 @@ spec:
       value: $(finally.teardown.results.ARTIFACTS_URL)
 
   tasks:
-    - name: debug
-      params:
-        - name: SNAPSHOT
-          value: $(params.SNAPSHOT)
-
-        - name: BONFIRE_IMAGE
-          value: "$(params.BONFIRE_IMAGE)"
-
-      taskRef:
-        resolver: git
-        params:
-          - name: url
-            value: $(params.URL)
-
-          - name: revision
-            value: $(params.REVISION)
-
-          - name: pathInRepo
-            value: tasks/testing.yaml
-
-    - name: reserve-namespace
-      params:
-        - name: NS_REQUESTER
-          value: "$(context.pipelineRun.name)"
-
-        - name: EPHEMERAL_ENV_PROVIDER_SECRET
-          value: "$(params.EPHEMERAL_ENV_PROVIDER_SECRET)"
-
-        - name: BONFIRE_IMAGE
-          value: "$(params.BONFIRE_IMAGE)"
-
-      taskRef:
-        resolver: git
-        params:
-          - name: url
-            value: "$(params.URL)"
-
-          - name: revision
-            value: "$(params.REVISION)"
-
-          - name: pathInRepo
-            value: tasks/reserve-namespace.yaml
-
     - name: deploy-application
       params:
         - name: BONFIRE_IMAGE
