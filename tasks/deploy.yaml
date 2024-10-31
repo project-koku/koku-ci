@@ -64,7 +64,7 @@ spec:
     - name: DEPLOY_TIMEOUT
       type: string
       description: "Deploy timeout"
-      default: "900"
+      default: "1800"
   steps:
     - name: deploy-application
       image: "$(params.BONFIRE_IMAGE)"
