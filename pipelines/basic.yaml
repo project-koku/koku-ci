@@ -11,31 +11,24 @@ spec:
     - name: URL
       type: string
       description: URL of the Git repository use for fetching the tasks
-      default: https://github.com/samdoran/bonfire-tekton
+      default: https://github.com/project-koku/koku-ci
 
     - name: REVISION
       type: string
       description: Git commit revision to use for fetching the tasks
-      default: bespoke
+      default: main
 
     - name: BONFIRE_IMAGE
       type: string
       description: The container Bonfire image to use for the tekton tasks
-      default: quay.io/redhat-user-workloads/hcc-devprod-tenant/hcc-cicd-tools/cicd-tools:eb1904eafc2d8af8a26b435de393d4776d9db2f6
+      default: quay.io/project-koku/koku-test-container:latest
 
     - name: SNAPSHOT
       type: string
       description: |
-        Spec section of an ApplicationSnapshot resource. Not all fields of the
-        resource are required. A minimal example:
-          {
-            "components": [
-              {
-                "containerImage": "quay.io/example/repo:latest"
-              }
-            ]
-          }
-        Each "containerImage" in the "components" array is validated.
+        JSON string provides useful information about the test, such as which
+        components Konflux is testing, and what git repository and commit
+        Konflux is using to build those components.
 
     - name: EPHEMERAL_ENV_PROVIDER_SECRET
       type: string
