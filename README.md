@@ -18,9 +18,9 @@ The tasks are run inside [koku-test-container] which contains the programs refer
 `COMPONENTS_W_RESOURCES` - Components that should not have their resource request removed<br/>
 `COMPONENTS` - Space separated list of components to deploy<br/>
 `DEPLOY_FRONTENDS` - `true` or `false`<br/>
-`DEPLOY_TIMEOUT` - [fuzzy date] value to wait before killing the deployment<br/>
+`DEPLOY_TIMEOUT` - Time in seconds to wait before killing the deployment<br/>
 `EXTRA_DEPLOY_ARGS`<br/>
-`IQE_CJI_TIMEOUT`<br/>
+`IQE_CJI_TIMEOUT` - [fuzzy date] value to wait before killing the deployment<br/>
 `IQE_ENV`<br/>
 `IQE_FILTER_EXPRESSION`<br/>
 `IQE_IBUTSU_SOURCE`<br/>
