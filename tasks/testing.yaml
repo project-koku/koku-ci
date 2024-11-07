@@ -15,6 +15,12 @@ spec:
     - name: REF_ENV
       type: string
 
+    - name: PIPELINE_RUN_NAME
+      type: string
+
+    - name: PIPELINE_RUN_UID
+      type: string
+
   steps:
     - name: show-some-things
       image: $(params.BONFIRE_IMAGE)
@@ -31,9 +37,9 @@ spec:
         - name: REF_ENV
           value: $(params.REF_ENV)
 
-
       script: |
         #!/usr/bin/bash
 
         env | sort
-        cat /usr/local/bin/deploy.py
+        echo Name $(params.PIPELINE_RUN_NAME)
+        echo UID $(params.PIPELINE_RUN_UID)

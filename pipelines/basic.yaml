@@ -152,194 +152,32 @@ spec:
       description:
       default: "insights-production"
 
-  results:
-    - name: ARTIFACTS_URL
-      description: URL for the test's artifacts
-      value: $(finally.teardown.results.ARTIFACTS_URL)
-
   tasks:
-    - name: reserve-namespace
+    - name: debug
       params:
-        - name: NS_REQUESTER
-          value: "$(context.pipelineRun.name)"
-
-        - name: EPHEMERAL_ENV_PROVIDER_SECRET
-          value: "$(params.EPHEMERAL_ENV_PROVIDER_SECRET)"
-
-        - name: BONFIRE_IMAGE
-          value: "$(params.BONFIRE_IMAGE)"
-      taskRef:
-        resolver: git
-        params:
-          - name: url
-            value: "$(params.URL)"
-
-          - name: revision
-            value: "$(params.REVISION)"
-
-          - name: pathInRepo
-            value: tasks/reserve-namespace.yaml
-
-    - name: deploy-application
-      params:
-        - name: BONFIRE_IMAGE
-          value: "$(params.BONFIRE_IMAGE)"
-
         - name: SNAPSHOT
-          value: "$(params.SNAPSHOT)"
+          value: $(params.SNAPSHOT)
 
-        - name: NS
-          value: "$(tasks.reserve-namespace.results.NS)"
-
-        - name: NS_REQUESTER
-          value: "$(context.pipelineRun.name)"
-
-        - name: APP_INTERFACE_SECRET
-          value: "$(params.APP_INTERFACE_SECRET)"
-
-        - name: APP_NAME
-          value: "$(params.APP_NAME)"
-
-        - name: BONFIRE_COMPONENT_NAME
-          value: "$(params.BONFIRE_COMPONENT_NAME)"
-
-        - name: COMPONENT_NAME
-          value: $(params.COMPONENT_NAME)
-
-        - name: COMPONENTS
-          value: "$(params.COMPONENTS)"
-
-        - name: COMPONENTS_W_RESOURCES
-          value: "$(params.COMPONENTS_W_RESOURCES)"
-
-        - name: EXTRA_DEPLOY_ARGS
-          value: "$(params.EXTRA_DEPLOY_ARGS)"
-
-        - name: DEPLOY_FRONTENDS
-          value: "$(params.DEPLOY_FRONTENDS)"
-
-        - name: DEPLOY_TIMEOUT
-          value: "$(params.DEPLOY_TIMEOUT)"
-
-      runAfter:
-        - reserve-namespace
-
-      taskRef:
-        resolver: git
-        params:
-          - name: url
-            value: "$(params.URL)"
-
-          - name: revision
-            value: "$(params.REVISION)"
-
-          - name: pathInRepo
-            value: tasks/deploy.yaml
-
-    - name: run-iqe-cji
-      params:
         - name: BONFIRE_IMAGE
           value: "$(params.BONFIRE_IMAGE)"
 
-        - name: NS
-          value: "$(tasks.reserve-namespace.results.NS)"
-
-        - name: NS_REQUESTER
-          value: "$(context.pipelineRun.name)"
-
-        - name: EPHEMERAL_ENV_PROVIDER_SECRET
-          value: "$(params.EPHEMERAL_ENV_PROVIDER_SECRET)"
-
-        - name: COMPONENT_NAME
-          value: "$(params.COMPONENT_NAME)"
-
-        - name: BONFIRE_COMPONENT_NAME
-          value: "$(params.BONFIRE_COMPONENT_NAME)"
-
-        - name: IQE_PLUGINS
-          value: "$(params.IQE_PLUGINS)"
-
-        - name: IQE_MARKER_EXPRESSION
-          value: "$(params.IQE_MARKER_EXPRESSION)"
-
-        - name: IQE_FILTER_EXPRESSION
-          value: "$(params.IQE_FILTER_EXPRESSION)"
-
-        - name: IQE_REQUIREMENTS
-          value: "$(params.IQE_REQUIREMENTS)"
-
-        - name: IQE_REQUIREMENTS_PRIORITY
-          value: "$(params.IQE_REQUIREMENTS_PRIORITY)"
-
-        - name: IQE_TEST_IMPORTANCE
-          value: "$(params.IQE_TEST_IMPORTANCE)"
-
-        - name: IQE_CJI_TIMEOUT
-          value: "$(params.IQE_CJI_TIMEOUT)"
-
-        - name: IQE_ENV
-          value: "$(params.IQE_ENV)"
-
-        - name: IQE_SELENIUM
-          value: "$(params.IQE_SELENIUM)"
-
-        - name: IQE_PARALLEL_ENABLED
-          value: "$(params.IQE_PARALLEL_ENABLED)"
-
-        - name: IQE_PARALLEL_WORKER_COUNT
-          value: "$(params.IQE_PARALLEL_WORKER_COUNT)"
-
-        - name: IQE_RP_ARGS
-          value: "$(params.IQE_RP_ARGS)"
-
-        - name: IQE_IBUTSU_SOURCE
-          value: "$(params.IQE_IBUTSU_SOURCE)"
+        - name: REF_ENV
+          value: $(params.REF_ENV)
 
         - name: PIPELINE_RUN_NAME
           value: $(context.pipelineRun.name)
 
-      runAfter:
-        - deploy-application
+        - name: PIPELINE_RUN_UID
+          value: $(context.pipelineRun.uid)
 
       taskRef:
         resolver: git
         params:
           - name: url
-            value: "$(params.URL)"
+            value: $(params.URL)
 
           - name: revision
-            value: "$(params.REVISION)"
+            value: $(params.REVISION)
 
           - name: pathInRepo
-            value: tasks/run-iqe-cji.yaml
-
-
-  finally:
-    - name: teardown
-      params:
-        - name: NS
-          value: "$(tasks.reserve-namespace.results.NS)"
-
-        - name: NS_REQUESTER
-          value: "$(context.pipelineRun.name)"
-
-        - name: ARTIFACTS_KEY
-          value: "$(context.pipelineRun.namespace)/$(context.pipelineRun.name)"
-
-        - name: AWS_SECRET
-          value: "$(params.AWS_SECRET)"
-
-        - name: BONFIRE_IMAGE
-          value: "$(params.BONFIRE_IMAGE)"
-
-      taskRef:
-        resolver: git
-        params:
-          - name: url
-            value: "$(params.URL)"
-
-          - name: revision
-            value: "$(params.REVISION)"
-
-          - name: pathInRepo
-            value: tasks/teardown.yaml
+            value: tasks/testing.yaml
