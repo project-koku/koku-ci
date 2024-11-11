@@ -295,6 +295,9 @@ spec:
         - name: IQE_IBUTSU_SOURCE
           value: "$(params.IQE_IBUTSU_SOURCE)"
 
+        - name: PIPELINE_RUN_NAME
+          value: $(context.pipelineRun.name)
+
       runAfter:
         - deploy-application
 
