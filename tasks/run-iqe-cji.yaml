@@ -93,6 +93,9 @@ spec:
       type: string
       description: "Update the ibutsu source for the current run"
       default: ""
+
+    - name: PIPELINE_RUN_NAME
+      type: string
   steps:
     - name: deploy-iqe-cji
       image: "$(params.BONFIRE_IMAGE)"
@@ -161,6 +164,9 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.labels['pac.test.appstudio.openshift.io/pull-request']
+
+        - name: PIPELINE_RUN_NAME
+          value: $(params.PIPELINE_RUN_NAME)
 
       script: |
         #!/bin/bash
