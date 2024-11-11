@@ -31,6 +31,11 @@ spec:
             fieldRef:
               fieldPath: metadata.labels['pac.test.appstudio.openshift.io/pull-request']
 
+        - name: CHECK_RUN_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['pac.test.appstudio.openshift.io/check-run-id']
+
         - name: SNAPSHOT
           value: $(params.SNAPSHOT)
 
@@ -43,3 +48,4 @@ spec:
         env | sort
         echo Name $(params.PIPELINE_RUN_NAME)
         echo UID $(params.PIPELINE_RUN_UID)
+

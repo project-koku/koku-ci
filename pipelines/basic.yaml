@@ -180,4 +180,4 @@ spec:
             value: $(params.REVISION)
 
           - name: pathInRepo
-            value: tasks/testing.yaml
+            value: tasks/debug.yaml
