@@ -36,11 +36,6 @@ spec:
             fieldRef:
               fieldPath: metadata.labels['pac.test.appstudio.openshift.io/check-run-id']
 
-        - name: NOPE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.labels['pac.test.appstudio.openshift.io/nope]
-
         - name: SNAPSHOT
           value: $(params.SNAPSHOT)
 
