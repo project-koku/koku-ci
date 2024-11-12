@@ -7,6 +7,9 @@ metadata:
     build.appstudio.redhat.com/pipeline: "bonfire"
 
 spec:
+  timeouts:
+    pipeline: 5h
+
   params:
     - name: URL
       type: string
