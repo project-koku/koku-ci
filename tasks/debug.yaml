@@ -36,6 +36,11 @@ spec:
             fieldRef:
               fieldPath: metadata.labels['pac.test.appstudio.openshift.io/check-run-id']
 
+        - name: NOPE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['pac.test.appstudio.openshift.io/nope]
+
         - name: SNAPSHOT
           value: $(params.SNAPSHOT)
 
@@ -43,9 +48,22 @@ spec:
           value: $(params.REF_ENV)
 
       script: |
-        #!/usr/bin/bash
+        #!/usr/bin/env python
 
-        env | sort
-        echo Name $(params.PIPELINE_RUN_NAME)
-        echo UID $(params.PIPELINE_RUN_UID)
+        import os
+
+        check_run_id = os.environ.get('CHECK_RUN_ID')
+        nope = os.environ.get('nope')
+        if check_run_id:
+          print("Got check run ID")
+
+        if nope:
+          print('Got non-existant field')
+
+        print(check_run_id)
+        print(type(check_run_id))
+
+        print(nope)
+        print(type(nope))
+
 
