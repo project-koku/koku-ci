@@ -171,6 +171,11 @@ spec:
             fieldRef:
               fieldPath: metadata.labels['pac.test.appstudio.openshift.io/check-run-id']
 
+        - name: APPLICATION
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['appstudio.openshift.io/application']
+
         - name: PIPELINE_RUN_NAME
           value: $(params.PIPELINE_RUN_NAME)
 
