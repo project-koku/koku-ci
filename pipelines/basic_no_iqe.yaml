@@ -165,42 +165,62 @@ spec:
           - name: pathInRepo
             value: tasks/deploy.yaml
 
-
   finally:
     - name: teardown
       params:
         - name: NS
           value: "$(tasks.reserve-namespace.results.NS)"
-
         - name: NS_REQUESTER
           value: "$(context.pipelineRun.name)"
-
         - name: ARTIFACTS_KEY
           value: "$(context.pipelineRun.namespace)/$(context.pipelineRun.name)"
-
         - name: AWS_SECRET
           value: "$(params.AWS_SECRET)"
-
         - name: BONFIRE_IMAGE
           value: "$(params.BONFIRE_IMAGE)"
-
       taskRef:
         resolver: git
         params:
           - name: url
             value: "$(params.URL)"
-
           - name: revision
             value: "$(params.REVISION)"
-
           - name: pathInRepo
             value: tasks/teardown.yaml
 
-    - name: slack-notification
+    - name: notify-success
+      when:
+        - input: $(tasks.status)
+          operator: in
+          values: [ "Succeeded" ]
       params:
         - name: message
           value: |
-            :x: Pipeline `<$(context.pipelineRun.name)>` has completed with status `$(tasks.status)`.
+            :white_check_mark: Pipeline `<$(context.pipelineRun.name)>` has completed successfully.
+            See details: <https://console.redhat.com/application-pipeline/workspaces/cost-mgmt-dev/applications/$(params.APP_NAME)/pipelineruns/$(context.pipelineRun.name)|Pipeline Run>.
+        - name: secret-name
+          value: "slack-webhook-notification-secret"
+        - name: key-name
+          value: "webhook-url"
+      taskRef:
+        params:
+          - name: name
+            value: slack-webhook-notification
+          - name: bundle
+            value: quay.io/konflux-ci/tekton-catalog/task-slack-webhook-notification:0.1@sha256:dc17b70633363d78414b8c06dc1660d25742935f106a6116995638e1210c2730
+          - name: kind
+            value: task
+        resolver: bundles
+
+    - name: notify-failure
+      when:
+        - input: $(tasks.status)
+          operator: in
+          values: [ "Failed", "Completed" ]
+      params:
+        - name: message
+          value: |
+            :x: Pipeline `<$(context.pipelineRun.name)>` has failed or completed with skipped tasks.
             See details: <https://console.redhat.com/application-pipeline/workspaces/cost-mgmt-dev/applications/$(params.APP_NAME)/pipelineruns/$(context.pipelineRun.name)|Pipeline Run>.
         - name: secret-name
           value: "slack-webhook-notification-secret"
