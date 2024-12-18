@@ -188,30 +188,6 @@ spec:
           - name: pathInRepo
             value: tasks/teardown.yaml
 
-    - name: notify-success
-      when:
-        - input: $(tasks.status)
-          operator: in
-          values: [ "Succeeded" ]
-      params:
-        - name: message
-          value: |
-            :white_check_mark: Pipeline `<$(context.pipelineRun.name)>` has completed successfully.
-            See details: <https://console.redhat.com/application-pipeline/workspaces/cost-mgmt-dev/applications/$(params.APP_NAME)/pipelineruns/$(context.pipelineRun.name)|Pipeline Run>.
-        - name: secret-name
-          value: "slack-webhook-notification-secret"
-        - name: key-name
-          value: "webhook-url"
-      taskRef:
-        params:
-          - name: name
-            value: slack-webhook-notification
-          - name: bundle
-            value: quay.io/konflux-ci/tekton-catalog/task-slack-webhook-notification:0.1@sha256:dc17b70633363d78414b8c06dc1660d25742935f106a6116995638e1210c2730
-          - name: kind
-            value: task
-        resolver: bundles
-
     - name: notify-failure
       when:
         - input: $(tasks.status)
