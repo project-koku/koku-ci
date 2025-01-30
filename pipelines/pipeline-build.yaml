@@ -460,6 +460,10 @@ spec:
           operator: in
           values:
             - "push"
+        - input: "{{ event_type }}"
+          operator: in
+          values:
+            - "pull_request"
       params:
         - name: message
           value: |
