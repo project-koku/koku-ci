@@ -1,10 +1,14 @@
 # Koku CI #
 
-[Tekton pipelines and tasks] for running [koku] integration tests in Konflux.
+[Tekton pipelines and tasks] for running builds and integration tests in Konflux.
 
-The tasks are run inside [koku-test-container] which contains the programs referenced in each task.
+The integration tests tasks are run inside [koku-test-container] which contains the programs referenced in each task.
 
 ### Pipelines ###
+
+#### pipeline-build ####
+
+It's the main build pipeline for some of the repositories in Konflux. The repositories that reference this file are: `koku`, `koku-daily`, `koku-report-emailer`, `nise-populator` 
 
 #### basic_no_iqe ####
 
