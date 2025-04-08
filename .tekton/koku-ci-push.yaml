@@ -1,0 +1,49 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://github.com/project-koku/koku-ci?rev={{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch == "main"
+    pipelinesascode.tekton.dev/pipeline: "pipelines/pipeline-build.yaml"
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: koku-ci
+    appstudio.openshift.io/component: koku-ci
+    pipelines.appstudio.openshift.io/type: build
+  name: koku-ci-on-push
+  namespace: cost-mgmt-dev-tenant
+spec:
+  params:
+  - name: git-url
+    value: '{{source_url}}'
+  - name: revision
+    value: '{{revision}}'
+  - name: output-image
+    value: quay.io/redhat-user-workloads/cost-mgmt-dev-tenant/koku-ci:{{revision}}
+  - name: dockerfile
+    value: dockerfiles/Dockerfile
+  - name: path-context
+    value: .
+  pipelineRef:
+    name: pipeline-build
+  taskRunTemplate: {}
+  workspaces:
+  - name: workspace
+    volumeClaimTemplate:
+      metadata:
+        creationTimestamp: null
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+      status: {}
+  - name: git-auth
+    secret:
+      secretName: '{{ git_auth_secret }}'
+status: {}
