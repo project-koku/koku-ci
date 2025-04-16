@@ -3,8 +3,12 @@ import re
 import urllib.request
 from pathlib import Path
 
-# Filepath to your YAML file
-file_path = Path("pipelines/pipeline-build.yaml")
+# Filepaths to your YAML files
+file_paths = [
+    Path("pipelines/pipeline-build.yaml"),
+    Path("pipelines/basic.yaml"),
+    Path("pipelines/basic_no_iqe.yaml"),
+]
 
 # Base URL for the container registry API (Quay.io in this case)
 registry_api_url = "https://quay.io/api/v1/repository"
@@ -33,22 +37,7 @@ def fetch_sha_for_tag(task_name, tag):
     return None
 
 
-# Read the file and extract tasks and tags
-with file_path.open("r") as file:
-    content = file.read()
-
-# Extract task names and tags from the file
-tasks_with_tags = {
-    (match.group(1), match.group(2)) for match in sha_pattern.finditer(content)
-}
-
-# Fetch the sha256 values for all tasks and tags
 latest_shas = {}
-for task_name, tag in tasks_with_tags:
-    if latest_sha := fetch_sha_for_tag(task_name, tag):
-        latest_shas[(task_name, tag)] = latest_sha
-    else:
-        print(f"Warning: Could not fetch SHA for {task_name}:{tag}")
 
 
 # Replace old sha256 values with the latest ones
@@ -60,10 +49,31 @@ def replace_sha(match):
     return f"{task_line}@{new_sha}" if new_sha else match.group(0)
 
 
-updated_content = sha_pattern.sub(replace_sha, content)
+for file_path in file_paths:
+    # Read the file and extract tasks and tags
+    with file_path.open("r") as file:
+        content = file.read()
 
-# Write the updated content back to the file
-with file_path.open("w") as file:
-    file.write(updated_content)
+    # Extract task names and tags from the file
+    tasks_with_tags = {
+        (match.group(1), match.group(2)) for match in sha_pattern.finditer(content)
+    }
 
-print("SHA256 values updated successfully!")
+    # Fetch the sha256 values for all tasks and tags
+    for task_name, tag in tasks_with_tags:
+        if latest_shas.get((task_name, tag)):
+            # skip looking up sha since we already have it
+            continue
+        if latest_sha := fetch_sha_for_tag(task_name, tag):
+            latest_shas[(task_name, tag)] = latest_sha
+        else:
+            print(f"Warning: Could not fetch SHA for {task_name}:{tag}")
+
+    # Replace old sha256 values with the latest ones
+    updated_content = sha_pattern.sub(replace_sha, content)
+
+    # Write the updated content back to the file
+    with file_path.open("w") as file:
+        file.write(updated_content)
+
+    print(f"SHA256 values updated successfully for {file_path}!")
