@@ -7,8 +7,9 @@ metadata:
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch == "main"
-    pipelinesascode.tekton.dev/pipeline: "pipelines/pipeline-build.yaml"
+    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch
+      == "main"
+    pipelinesascode.tekton.dev/pipeline: pipelines/pipeline-build.yaml
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: koku-ci
@@ -30,7 +31,8 @@ spec:
     value: .
   pipelineRef:
     name: pipeline-build
-  taskRunTemplate: {}
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-koku-ci
   workspaces:
   - name: workspace
     volumeClaimTemplate:
