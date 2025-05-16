@@ -221,6 +221,9 @@ spec:
         - name: DEPLOY_TIMEOUT
           value: "$(params.DEPLOY_TIMEOUT)"
 
+        - name: PIPELINE_RUN_NAME
+          value: $(context.pipelineRun.name)
+
       runAfter:
         - reserve-namespace
 
