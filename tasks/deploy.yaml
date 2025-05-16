@@ -65,6 +65,9 @@ spec:
       type: string
       description: "Deploy timeout"
       default: "30min"
+
+    - name: PIPELINE_RUN_NAME
+      type: string
   steps:
     - name: deploy-application
       image: "$(params.BONFIRE_IMAGE)"
