@@ -126,39 +126,13 @@ spec:
         - name: DEPLOY_TIMEOUT
           value: "$(params.DEPLOY_TIMEOUT)"
 
-        - name: AWS_CREDENTIALS_EPH
-          valueFrom:
-            secretKeyRef:
-              name: ephemeral-env-credentials
-              key: aws
-
-        - name: GCP_CREDENTIALS_EPH
-          valueFrom:
-            secretKeyRef:
-              name: ephemeral-env-credentials
-              key: gcp
-
-        - name: OCI_CREDENTIALS_EPH
-          valueFrom:
-            secretKeyRef:
-              name: ephemeral-env-credentials
-              key: oci
-
-        - name: OCI_CONFIG_EPH
-          valueFrom:
-            secretKeyRef:
-              name: ephemeral-env-credentials
-              key: oci_config
-
         - name: PR_NUMBER
           valueFrom:
             fieldRef:
               fieldPath: metadata.labels['pac.test.appstudio.openshift.io/pull-request']
 
-        - name: CHECK_RUN_ID
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.labels['pac.test.appstudio.openshift.io/check-run-id']
+        - name: PIPELINE_RUN_NAME
+          value: $(params.PIPELINE_RUN_NAME)
 
       script: |
         #!/bin/bash
