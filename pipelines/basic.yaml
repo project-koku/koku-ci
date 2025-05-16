@@ -244,6 +244,9 @@ spec:
         - name: BONFIRE_IMAGE
           value: "$(params.BONFIRE_IMAGE)"
 
+        - name: SNAPSHOT
+          value: "$(params.SNAPSHOT)"
+
         - name: NS
           value: "$(tasks.reserve-namespace.results.NS)"
 

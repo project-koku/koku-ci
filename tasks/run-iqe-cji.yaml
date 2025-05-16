@@ -9,6 +9,10 @@ spec:
       description: The container Bonfire image to use for the tekton tasks
       default: quay.io/project-koku/koku-test-container:latest
 
+    - name: SNAPSHOT
+      type: string
+      description: "AppStudio snapshot (see example above)"
+
     - name: EPHEMERAL_ENV_PROVIDER_SECRET
       type: string
       default: ephemeral-env-provider
@@ -112,6 +116,9 @@ spec:
             secretKeyRef:
               name: $(params.EPHEMERAL_ENV_PROVIDER_SECRET)
               key: url
+
+        - name: SNAPSHOT
+          value: $(params.SNAPSHOT)
 
         - name: BONFIRE_BOT
           value: "true"
