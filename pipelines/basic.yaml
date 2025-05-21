@@ -240,6 +240,7 @@ spec:
             value: tasks/deploy.yaml
 
     - name: run-iqe-cji
+      timeout: "5m"
       params:
         - name: BONFIRE_IMAGE
           value: "$(params.BONFIRE_IMAGE)"
