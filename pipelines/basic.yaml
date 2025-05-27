@@ -100,7 +100,7 @@ spec:
     - name: IQE_CJI_TIMEOUT
       type: string
       description: This is the time to wait for smoke test to complete or fail
-      default: 6h
+      default: 8h
 
     - name: IQE_ENV
       type: string
@@ -240,7 +240,7 @@ spec:
             value: tasks/deploy.yaml
 
     - name: run-iqe-cji
-      timeout: "6h"
+      timeout: "$(params.IQE_CJI_TIMEOUT)"
       params:
         - name: BONFIRE_IMAGE
           value: "$(params.BONFIRE_IMAGE)"
