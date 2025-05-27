@@ -66,7 +66,7 @@ spec:
     - name: IQE_CJI_TIMEOUT
       type: string
       description: This is the time to wait for smoke test to complete or fail
-      default: 6h
+      default: 8h
 
     - name: IQE_ENV
       type: string
@@ -103,7 +103,7 @@ spec:
   steps:
     - name: deploy-iqe-cji
       image: "$(params.BONFIRE_IMAGE)"
-      timeout: 6h
+      timeout: "8h"
       env:
         - name: OC_LOGIN_TOKEN
           valueFrom:
