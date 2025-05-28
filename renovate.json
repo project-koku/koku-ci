@@ -6,5 +6,13 @@
     "schedule": [
         "on Monday after 3am and before 10am"
     ],
-    "timezone": "US/Eastern"
+    "timezone": "US/Eastern",
+    "tekton": {
+        "includePaths": [
+        ".tekton/**",
+        "dockerfiles/**",
+        "pipelines/**",
+        "tasks/**"
+        ]
+    }
 }
