@@ -3,10 +3,6 @@
     "extends": [
         "github>konflux-ci/mintmaker-presets:group-python-poetry"
     ],
-    "schedule": [
-        "on Monday after 3am and before 10am"
-    ],
-    "timezone": "US/Eastern",
     "tekton": {
         "includePaths": [
         ".tekton/**",
