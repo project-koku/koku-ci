@@ -24,7 +24,7 @@ spec:
 
     - name: AWS_SECRET
       type: string
-      default: rh-artifacts-bucket
+      default: hccm-konflux-artifacts
       description: Secret with connection details to S3
 
     - name: ARTIFACTS_KEY
@@ -93,7 +93,7 @@ spec:
           value: us-east-1
 
         - name: BUCKET
-          value: rh-artifacts-bucket
+          value: hccm-konflux-artifacts
 
         - name: ARTIFACTS_KEY
           value: $(params.ARTIFACTS_KEY)
