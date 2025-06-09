@@ -152,6 +152,11 @@ spec:
       description:
       default: "insights-production"
 
+    - name: IS_SCHEDULED_TEST_JOB
+      type: string
+      description: "Whether this is a scheduled test job"
+      default: "false"
+
   results:
     - name: ARTIFACTS_URL
       description: URL for the test's artifacts
@@ -304,6 +309,9 @@ spec:
 
         - name: PIPELINE_RUN_NAME
           value: $(context.pipelineRun.name)
+
+        - name: IS_SCHEDULED_TEST_JOB
+          value: "$(params.IS_SCHEDULED_TEST_JOB)"
 
       runAfter:
         - deploy-application
