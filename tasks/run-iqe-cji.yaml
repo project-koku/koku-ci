@@ -100,6 +100,12 @@ spec:
 
     - name: PIPELINE_RUN_NAME
       type: string
+
+    - name: IS_SCHEDULED_TEST_JOB
+      type: string
+      description: "Whether this is a scheduled test job or not"
+      default: "false"
+
   steps:
     - name: deploy-iqe-cji
       image: "$(params.BONFIRE_IMAGE)"
@@ -185,6 +191,9 @@ spec:
 
         - name: PIPELINE_RUN_NAME
           value: $(params.PIPELINE_RUN_NAME)
+
+        - name: IS_SCHEDULED_TEST_JOB
+          value: $(params.IS_SCHEDULED_TEST_JOB)
 
       script: |
         #!/bin/bash
