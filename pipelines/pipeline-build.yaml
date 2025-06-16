@@ -415,9 +415,10 @@ spec:
 
     - name: apply-tags
       params:
-        - name: IMAGE
+        - name: IMAGE_URL
           value: $(tasks.build-container.results.IMAGE_URL)
-
+        - name: IMAGE_DIGEST
+          value: $(tasks.build-container.results.IMAGE_DIGEST)
         - name: ADDITIONAL_TAGS
           value:
             - $(params.tag-prefix)$(tasks.clone-repository.results.short-commit)
