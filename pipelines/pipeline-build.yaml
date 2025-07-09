@@ -406,6 +406,8 @@ spec:
           value: quay.io/konflux-ci/tekton-catalog/task-sast-unicode-check-oci-ta:0.3@sha256:a2bde66f6b4164620298c7d709b8f08515409404000fa1dc2260d2508b135651
         - name: kind
           value: task
+        - name: image-digest
+          value: $(tasks.build-container.results.IMAGE_DIGEST)
         resolver: bundles
       when:
       - input: $(params.skip-checks)
