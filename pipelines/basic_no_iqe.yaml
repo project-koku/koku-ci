@@ -113,7 +113,14 @@ spec:
             value: tasks/reserve-namespace.yaml
     - name: check-pr-labels
       taskRef:
-        name: check-pr-labels
+        resolver: git
+        params:
+          - name: url
+            value: "$(params.URL)"
+          - name: revision
+            value: "$(params.REVISION)"
+          - name: pathInRepo
+            value: tasks/check-pr-labels.yaml
       params:
         - name: PR_NUMBER
           value: "$(context.pipelineRun.metadata.labels['pac.test.appstudio.openshift.io/pull-request'])"
