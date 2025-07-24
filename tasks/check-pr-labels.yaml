@@ -7,12 +7,6 @@ spec:
   params:
     - name: PR_NUMBER
       type: string
-    - name: GITHUB_OWNER
-      type: string
-      default: "project-koku"
-    - name: GITHUB_REPO
-      type: string
-      default: "koku"
   results:
     - name: should_deploy
       description: Whether the pipeline should proceed with deploy
@@ -21,11 +15,9 @@ spec:
       image: python:3.11-slim
       env:
         - name: PR_NUMBER
-          value: "$(params.PR_NUMBER)"
-        - name: GITHUB_OWNER
-          value: "$(params.GITHUB_OWNER)"
-        - name: GITHUB_REPO
-          value: "$(params.GITHUB_REPO)"
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['pac.test.appstudio.openshift.io/pull-request']
       script: |
         #!/usr/bin/env bash
         set -euo pipefail
