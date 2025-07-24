@@ -263,6 +263,13 @@ spec:
             value: tasks/deploy.yaml
 
     - name: run-iqe-cji
+      runAfter:
+        - check-pr-labels
+        - deploy-application
+      when:
+        - input: $(tasks.check-pr-labels.results.should_deploy)
+          operator: in
+          values: [ "true" ]
       timeout: "8h"
       params:
         - name: BONFIRE_IMAGE
