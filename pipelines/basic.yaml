@@ -190,8 +190,10 @@ spec:
         params:
           - name: url
             value: "$(params.URL)"
+
           - name: revision
             value: "$(params.REVISION)"
+
           - name: pathInRepo
             value: tasks/check-pr-labels.yaml
       params:
