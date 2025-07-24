@@ -322,9 +322,6 @@ spec:
         - name: IS_SCHEDULED_TEST_JOB
           value: "$(params.IS_SCHEDULED_TEST_JOB)"
 
-      runAfter:
-        - deploy-application
-
       taskRef:
         resolver: git
         params:
