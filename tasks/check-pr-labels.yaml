@@ -37,7 +37,7 @@ spec:
         from urllib.error import HTTPError
 
         def get_pr_labels(pr_number: str, owner: str, repo: str) -> list[str]:
-            url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
+            url = f"https://api.github.com/repos/project-koku/koku/pulls/{pr_number}"
             try:
                 with urllib.request.urlopen(url) as response:
                     data = json.loads(response.read())
