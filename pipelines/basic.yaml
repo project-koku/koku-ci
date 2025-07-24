@@ -184,7 +184,7 @@ spec:
 
           - name: pathInRepo
             value: tasks/reserve-namespace.yaml
-    - name: check-labels
+    - name: check-pr-labels
       taskRef:
         name: check-pr-labels
       params:
