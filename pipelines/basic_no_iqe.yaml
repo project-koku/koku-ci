@@ -111,29 +111,8 @@ spec:
 
           - name: pathInRepo
             value: tasks/reserve-namespace.yaml
-    - name: check-pr-labels
-      taskRef:
-        resolver: git
-        params:
-          - name: url
-            value: "$(params.URL)"
 
-          - name: revision
-            value: "$(params.REVISION)"
-
-          - name: pathInRepo
-            value: tasks/check-pr-labels.yaml
-      params:
-        - name: PR_NUMBER
-          value: "$(context.pipelineRun.metadata.labels['pac.test.appstudio.openshift.io/pull-request'])"
     - name: deploy-application
-      runAfter:
-        - reserve-namespace
-        - check-pr-labels
-      when:
-        - input: $(tasks.check-pr-labels.results.should_deploy)
-          operator: in
-          values: [ "true" ]
       params:
         - name: BONFIRE_IMAGE
           value: "$(params.BONFIRE_IMAGE)"
@@ -173,6 +152,9 @@ spec:
 
         - name: PIPELINE_RUN_NAME
           value: "$(context.pipelineRun.name)"
+
+      runAfter:
+        - reserve-namespace
 
       taskRef:
         resolver: git
