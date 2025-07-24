@@ -165,9 +165,6 @@ spec:
         - name: PIPELINE_RUN_NAME
           value: "$(context.pipelineRun.name)"
 
-      runAfter:
-        - reserve-namespace
-
       taskRef:
         resolver: git
         params:
