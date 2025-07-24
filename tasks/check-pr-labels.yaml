@@ -1,0 +1,79 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: check-pr-labels
+spec:
+  params:
+    - name: PR_NUMBER
+      type: string
+    - name: GITHUB_OWNER
+      type: string
+      default: "project-koku"
+    - name: GITHUB_REPO
+      type: string
+      default: "koku"
+  results:
+    - name: should_deploy
+      description: Whether the pipeline should proceed with deploy
+  steps:
+    - name: run-check
+      image: python:3.11-slim
+      env:
+        - name: PR_NUMBER
+          value: "$(params.PR_NUMBER)"
+        - name: GITHUB_OWNER
+          value: "$(params.GITHUB_OWNER)"
+        - name: GITHUB_REPO
+          value: "$(params.GITHUB_REPO)"
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        cat <<EOF | python3
+import json
+import os
+import sys
+import urllib.request
+from urllib.error import HTTPError
+
+def get_pr_labels(pr_number: str, owner: str, repo: str) -> list[str]:
+    url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
+    try:
+        with urllib.request.urlopen(url) as response:
+            data = json.loads(response.read())
+            return [label["name"] for label in data.get("labels", [])]
+    except HTTPError as e:
+        print(f"[ERROR] GitHub API error: {e.code} - {e.reason}")
+        print(e.read().decode())
+        sys.exit(0)
+    except Exception as e:
+        print(f"[ERROR] Unexpected error: {e}")
+        sys.exit(0)
+
+def main():
+    pr_number = os.environ.get("PR_NUMBER", "")
+    owner = os.environ.get("GITHUB_OWNER", "project-koku")
+    repo = os.environ.get("GITHUB_REPO", "koku")
+
+    if not pr_number:
+        print("[INFO] No PR number. Skipping label check.")
+        print("true", file=open("/tekton/results/should_deploy", "w"))
+        return
+
+    labels = get_pr_labels(pr_number, owner, repo)
+    print(f"[INFO] Labels found: {labels}")
+
+    if "run-jenkins-tests" in labels:
+        print("[INFO] PR labeled to run Jenkins tests. Skipping Tekton deploy.")
+        print("false", file=open("/tekton/results/should_deploy", "w"))
+        return
+
+    if "smokes-required" in labels and not any(l.endswith("smoke-tests") for l in labels):
+        print("[ERROR] PR is missing required smoke-tests label.")
+        sys.exit(1)
+
+    print("[INFO] Label check passed. Proceeding.")
+    print("true", file=open("/tekton/results/should_deploy", "w"))
+
+if __name__ == "__main__":
+    main()
+EOF
