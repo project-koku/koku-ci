@@ -16,33 +16,33 @@ spec:
         #!/bin/sh
         set -e
 
-        echo "Checking labels for PR: $PR_NUMBER"
+        echo "[INFO] Checking labels for PR: $PR_NUMBER"
         
         if [ -z "$PR_NUMBER" ]; then
-          echo "PR_NUMBER is empty. Skipping label check."
+          echo "[INFO] PR_NUMBER is empty. Skipping label check."
           exit 0
         fi
 
         LABELS=$(curl -s https://api.github.com/repos/project-koku/koku/issues/$PR_NUMBER/labels | grep -o '"name": *"[^"]*"' | cut -d '"' -f4)
 
-        echo "PR Labels: $LABELS"
+        echo "[INFO] PR Labels: $LABELS"
 
         if ! echo "$LABELS" | grep -q "testing-cicd"; then
-          echo "No test label found. Skipping label check logic."
+          echo "[INFO] No test label found. Skipping label check logic."
           exit 0
         fi
 
         if echo "$LABELS" | grep -q "run-jenkins-tests"; then
-          echo "PR labeled to run Jenkins tests. Skipping Tekton pipeline."
+          echo "[INFO] PR labeled to run Jenkins tests. Skipping Tekton pipeline."
           exit 0
         fi
 
         if echo "$LABELS" | grep -q "smokes-required"; then
           if ! echo "$LABELS" | grep -q "smoke-tests$"; then
-            echo "❌ Missing required smoke test label with smokes-required."
+            echo "[INFO] Missing required smoke test label with smokes-required."
             exit 1
           fi
         fi
 
-        echo "✅ Label check passed."
+        echo "[INFO] Label check passed."
         exit 0
