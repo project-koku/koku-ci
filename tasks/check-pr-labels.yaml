@@ -23,7 +23,8 @@ spec:
           exit 0
         fi
 
-        LABELS=$(curl -s https://api.github.com/repos/project-koku/koku/pulls/$PR_NUMBER/labels | jq -r '.[].name')
+        LABELS=$(curl -s https://api.github.com/repos/project-koku/koku/pulls/$PR_NUMBER/labels | grep '"name":' | cut -d '"' -f4)
+
         echo "PR Labels: $LABELS"
 
         if ! echo "$LABELS" | grep -q "testing-cicd"; then
