@@ -23,7 +23,7 @@ spec:
           exit 0
         fi
 
-        LABELS=$(curl -s https://api.github.com/repos/project-koku/koku/pulls/$PR_NUMBER/labels | grep '"name":' | cut -d '"' -f4)
+        LABELS=$(curl -s https://api.github.com/repos/project-koku/koku/issues/$PR_NUMBER/labels | grep -o '"name": *"[^"]*"' | cut -d '"' -f4)
 
         echo "PR Labels: $LABELS"
 
