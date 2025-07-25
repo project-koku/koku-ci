@@ -175,9 +175,6 @@ spec:
 
           - name: pathInRepo
             value: tasks/check-pr-labels.yaml
-      params:
-        - name: PR_NUMBER
-          value: "$(context.pipelineRun.metadata.labels['pac.test.appstudio.openshift.io/pull-request'])"
     - name: reserve-namespace
       params:
         - name: NS_REQUESTER
