@@ -157,10 +157,6 @@ spec:
       description: "Whether this is a scheduled test job"
       default: "false"
 
-    - name: PR_NUMBER
-      type: string
-      description: Pull Request number
-
   results:
     - name: ARTIFACTS_URL
       description: URL for the test's artifacts
@@ -169,10 +165,19 @@ spec:
   tasks:
     - name: check-pr-labels
       taskRef:
-        name: check-pr-labels
+        resolver: git
+        params:
+          - name: url
+            value: "$(params.URL)"
+
+          - name: revision
+            value: "$(params.REVISION)"
+
+          - name: pathInRepo
+            value: tasks/check-pr-labels.yaml
       params:
         - name: PR_NUMBER
-          value: "$(params.PR_NUMBER)"
+          value: "$(context.pipelineRun.metadata.labels['pac.test.appstudio.openshift.io/pull-request'])"
     - name: reserve-namespace
       params:
         - name: NS_REQUESTER
