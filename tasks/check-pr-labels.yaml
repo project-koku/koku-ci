@@ -1,0 +1,38 @@
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: check-pr-labels
+spec:
+  params:
+    - name: PR_NUMBER
+      type: string
+  steps:
+    - name: check-labels
+      image: python:3.11-slim
+      script: |
+        #!/bin/sh
+        echo "Checking labels for PR: $(params.PR_NUMBER)"
+        LABELS=$(curl -s https://api.github.com/repos/project-koku/koku/pulls/$(params.PR_NUMBER)/labels | jq '.[].name')
+        echo "PR Labels: $LABELS"
+      
+        if ! echo "$LABELS" | grep -q "testing-ci-cd"; then
+          echo "No test label found. Skipping label check logic."
+          exit 0
+        fi
+      
+        # Seu código de verificação real começa aqui:
+        if echo "$LABELS" | grep -q "run-jenkins-tests"; then
+          echo "Delegating to Jenkins, skipping pipeline."
+          exit 0
+        fi
+      
+        if echo "$LABELS" | grep -q "smokes-required"; then
+          if ! echo "$LABELS" | grep -q "ok-to-skip-smokes"; then
+            echo "Missing label ok-to-skip-smokes with smokes-required"
+            exit 1
+          fi
+        fi
+      
+        echo "Labels check passed"
+
