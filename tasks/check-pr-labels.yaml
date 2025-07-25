@@ -38,7 +38,7 @@ spec:
         fi
 
         if echo "$LABELS" | grep -q "smokes-required"; then
-          if ! echo "$LABELS" | grep -q "smoke-tests\"$"; then
+          if ! echo "$LABELS" | grep -q "smoke-tests$"; then
             echo "❌ Missing required smoke test label with smokes-required."
             exit 1
           fi
