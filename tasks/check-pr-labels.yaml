@@ -16,7 +16,7 @@ spec:
         LABELS=$(curl -s https://api.github.com/repos/project-koku/koku/pulls/$(params.PR_NUMBER)/labels | jq '.[].name')
         echo "PR Labels: $LABELS"
       
-        if ! echo "$LABELS" | grep -q "testing-ci-cd"; then
+        if ! echo "$LABELS" | grep -q "testing-cicd"; then
           echo "No test label found. Skipping label check logic."
           exit 0
         fi
