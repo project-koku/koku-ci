@@ -6,7 +6,7 @@ metadata:
 spec:
   steps:
     - name: check-labels
-      image: python:3.11-slim
+      image: curlimages/curl:latest
       env:
         - name: PR_NUMBER
           valueFrom:
