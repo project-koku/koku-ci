@@ -21,7 +21,6 @@ spec:
           exit 0
         fi
       
-        # Seu código de verificação real começa aqui:
         if echo "$LABELS" | grep -q "run-jenkins-tests"; then
           echo "Delegating to Jenkins, skipping pipeline."
           exit 0
