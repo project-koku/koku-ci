@@ -7,32 +7,41 @@ spec:
   params:
     - name: PR_NUMBER
       type: string
+      description: Pull Request number
+
   steps:
     - name: check-labels
       image: python:3.11-slim
       script: |
         #!/bin/sh
+        set -e
+
         echo "Checking labels for PR: $(params.PR_NUMBER)"
-        LABELS=$(curl -s https://api.github.com/repos/project-koku/koku/pulls/$(params.PR_NUMBER)/labels | jq '.[].name')
+        
+        if [ -z "$(params.PR_NUMBER)" ]; then
+          echo "PR_NUMBER is empty. Skipping label check."
+          exit 0
+        fi
+
+        LABELS=$(curl -s https://api.github.com/repos/project-koku/koku/pulls/$(params.PR_NUMBER)/labels | jq -r '.[].name')
         echo "PR Labels: $LABELS"
-      
-        if ! echo "$LABELS" | grep -q "testing-ci-cd"; then
+
+        if ! echo "$LABELS" | grep -q "testing-cicd"; then
           echo "No test label found. Skipping label check logic."
           exit 0
         fi
-      
-        # Seu código de verificação real começa aqui:
+
         if echo "$LABELS" | grep -q "run-jenkins-tests"; then
-          echo "Delegating to Jenkins, skipping pipeline."
+          echo "PR labeled to run Jenkins tests. Skipping Tekton pipeline."
           exit 0
         fi
-      
+
         if echo "$LABELS" | grep -q "smokes-required"; then
-          if ! echo "$LABELS" | grep -q "ok-to-skip-smokes"; then
-            echo "Missing label ok-to-skip-smokes with smokes-required"
+          if ! echo "$LABELS" | grep -q "smoke-tests\"$"; then
+            echo "❌ Missing required smoke test label with smokes-required."
             exit 1
           fi
         fi
-      
-        echo "Labels check passed"
 
+        echo "✅ Label check passed."
+        exit 0
