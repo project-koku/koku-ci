@@ -16,14 +16,14 @@ spec:
         #!/bin/sh
         set -e
 
-        echo "Checking labels for PR: $(params.PR_NUMBER)"
+        echo "Checking labels for PR: $PR_NUMBER"
         
-        if [ -z "$(params.PR_NUMBER)" ]; then
+        if [ -z "$PR_NUMBER" ]; then
           echo "PR_NUMBER is empty. Skipping label check."
           exit 0
         fi
 
-        LABELS=$(curl -s https://api.github.com/repos/project-koku/koku/pulls/$(params.PR_NUMBER)/labels | jq -r '.[].name')
+        LABELS=$(curl -s https://api.github.com/repos/project-koku/koku/pulls/$PR_NUMBER)/labels | jq -r '.[].name')
         echo "PR Labels: $LABELS"
 
         if ! echo "$LABELS" | grep -q "testing-cicd"; then
