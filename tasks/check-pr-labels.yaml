@@ -4,14 +4,14 @@ kind: Task
 metadata:
   name: check-pr-labels
 spec:
-  params:
-    - name: PR_NUMBER
-      type: string
-      description: Pull Request number
-
   steps:
     - name: check-labels
       image: python:3.11-slim
+      env:
+        - name: PR_NUMBER
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['pac.test.appstudio.openshift.io/pull-request']
       script: |
         #!/bin/sh
         set -e
