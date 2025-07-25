@@ -157,12 +157,22 @@ spec:
       description: "Whether this is a scheduled test job"
       default: "false"
 
+    - name: PR_NUMBER
+      type: string
+      description: Pull Request number
+
   results:
     - name: ARTIFACTS_URL
       description: URL for the test's artifacts
       value: $(finally.teardown.results.ARTIFACTS_URL)
 
   tasks:
+    - name: check-pr-labels
+      taskRef:
+        name: check-pr-labels
+      params:
+        - name: PR_NUMBER
+          value: "$(params.PR_NUMBER)"
     - name: reserve-namespace
       params:
         - name: NS_REQUESTER
@@ -184,6 +194,8 @@ spec:
 
           - name: pathInRepo
             value: tasks/reserve-namespace.yaml
+      runAfter:
+        - check-pr-labels
 
     - name: deploy-application
       params:
