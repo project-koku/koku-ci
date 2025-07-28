@@ -27,11 +27,6 @@ spec:
 
         echo "[INFO] PR Labels: $LABELS"
 
-        if ! echo "$LABELS" | grep -q "testing-cicd"; then
-          echo "[INFO] No test label found. Skipping label check logic."
-          exit 0
-        fi
-
         if echo "$LABELS" | grep -q "run-jenkins-tests"; then
           echo "[INFO] PR labeled to run Jenkins tests. Skipping Tekton pipeline."
           exit 0
