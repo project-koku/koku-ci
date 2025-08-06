@@ -53,7 +53,7 @@ spec:
 
         ns=$(bonfire namespace reserve --pool "$BONFIRE_EPHEMERAL_ENV_NAMESPACE_POOL" --duration 6h30m)
 
-        namespace_info=$(bonfire namespace describe $ns --output json)
+        namespace_info=$(bonfire namespace describe "$ns" --output json)
         echo $namespace_info | jq -j '.namespace' | tee $(results.NS.path)
 
         # Get the console URL
