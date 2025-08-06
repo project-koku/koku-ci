@@ -1,4 +1,4 @@
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Task
 metadata:
   name: reserve-namespace
@@ -8,20 +8,22 @@ spec:
       type: string
       description: The container Bonfire image to use for the tekton tasks
       default: quay.io/project-koku/koku-test-container:latest
-
     - name: NS_REQUESTER
       type: string
       description: The name of the person/pipeline that requested the namespace
-
     - name: EPHEMERAL_ENV_PROVIDER_SECRET
       type: string
       default: ephemeral-env-provider
       description: "Secret for connecting to ephemeral env provider cluster"
-
+    - name: EPHEMERAL_ENV_NAMESPACE_POOL
+      type: string
+      default: default
+      description: "The pool of namespaces to reserve from"
   results:
     - name: NS
       description: ""
-
+    - name: CONSOLE_URL
+      description: "The URL of the console for the namespace"
   steps:
     - name: reserve-namespace
       image: "$(params.BONFIRE_IMAGE)"
@@ -31,21 +33,28 @@ spec:
             secretKeyRef:
               name: $(params.EPHEMERAL_ENV_PROVIDER_SECRET)
               key: token
-
         - name: OC_LOGIN_SERVER
           valueFrom:
             secretKeyRef:
               name: $(params.EPHEMERAL_ENV_PROVIDER_SECRET)
               key: url
-
         - name: BONFIRE_BOT
           value: "true"
+        - name: BONFIRE_NS_REQUESTER
+          value: "$(params.NS_REQUESTER)"
+        - name: BONFIRE_EPHEMERAL_ENV_NAMESPACE_POOL
+          value: "$(params.EPHEMERAL_ENV_NAMESPACE_POOL)"
       script: |
         #!/bin/bash
         set -ex
 
         echo "Connecting to the ephemeral namespace cluster"
-        login.sh
+        oc_wrapper login --token="$OC_LOGIN_TOKEN" --server="$OC_LOGIN_SERVER"
 
-        echo "Allocating ephemeral namespace"
-        reserve-ns.sh $(results.NS.path) "$(params.NS_REQUESTER)"
+        bonfire namespace reserve --pool "$BONFIRE_EPHEMERAL_ENV_NAMESPACE_POOL" --duration 6h30m
+
+        namespace_info=$(bonfire namespace describe --output json)
+        echo $namespace_info | jq -j '.namespace' | tee $(results.NS.path)
+
+        # Get the console URL
+        echo $namespace_info | jq -j '.console_namespace_route' | tee $(results.CONSOLE_URL.path)
