@@ -93,7 +93,7 @@ spec:
           value: us-east-1
 
         - name: BUCKET
-          value: hccm-konflux-artifacts
+          value: konflux-artifacts
 
         - name: ARTIFACTS_KEY
           value: $(params.ARTIFACTS_KEY)
