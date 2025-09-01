@@ -24,7 +24,7 @@ spec:
 
     - name: AWS_SECRET
       type: string
-      default: konflux-artifacts
+      default: hccm-konflux-artifacts
       description: Secret with connection details to S3
 
     - name: ARTIFACTS_KEY
