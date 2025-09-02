@@ -81,13 +81,13 @@ spec:
           valueFrom:
             secretKeyRef:
               name: $(params.AWS_SECRET)
-              key: aws_access_key_id
+              key: AWS_ACCESS_KEY_ID
 
         - name: AWS_SECRET_ACCESS_KEY
           valueFrom:
             secretKeyRef:
               name: $(params.AWS_SECRET)
-              key: aws_secret_access_key
+              key: AWS_SECRET
 
         - name: AWS_DEFAULT_REGION
           value: us-east-1
