@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Konflux Login Helper
-# Script to simplify login to Konflux cluster and project selection
+# Script to simplify login to Konflux cluster
 # Repository: koku-ci
 # Author: Cost Management Team
 
@@ -25,9 +25,8 @@ if [[ -f "$ENV_FILE" ]]; then
 fi
 
 # Default values (can be overridden by .env)
-DEFAULT_ENV="${DEFAULT_ENV:-konflux}"
 DEFAULT_PROJECT="${DEFAULT_PROJECT:-cost-mgmt-dev-tenant}"
-KONFLUX_URL="${KONFLUX_URL:-https://YOUR-KONFLUX-CLUSTER:6443/}"
+KONFLUX_KUBECONFIG="${KONFLUX_KUBECONFIG:-~/.kube/konflux-cost-mgmt-dev.yaml}"
 
 # Helper functions
 log_info() {
@@ -55,26 +54,16 @@ USAGE:
     $0 [OPTIONS]
 
 OPTIONS:
-    -e, --environment ENV    Environment to connect to (default: konflux)
     -p, --project PROJECT    Project/namespace to switch to (default: cost-mgmt-dev-tenant)
     -h, --help              Show this help message
-
-ENVIRONMENTS:
-    konflux                 Konflux production cluster (default)
-    ephemeral               Ephemeral environment
-    stage                   Stage environment  
-    prod                    Production environment
 
 EXAMPLES:
     $0                                    # Login to Konflux, switch to cost-mgmt-dev-tenant
     $0 -p koku-dev-tenant                 # Login to Konflux, switch to koku-dev-tenant
-    $0 -e stage -p my-project             # Login to stage, switch to my-project
-    $0 --environment prod --project prod-tenant
 
 DEFAULT BEHAVIOR:
-    - Environment: $DEFAULT_ENV
     - Project: $DEFAULT_PROJECT
-    - URL: $KONFLUX_URL
+    - Kubeconfig: $KONFLUX_KUBECONFIG
 
 REPOSITORY: koku-ci
 TEAM: Cost Management
@@ -84,23 +73,16 @@ EOF
 
 # Parse command line arguments
 parse_args() {
-    local env="$DEFAULT_ENV"
     local project="$DEFAULT_PROJECT"
     
     # Handle help first
-    for arg in "$@"; do
-        if [[ "$arg" == "-h" || "$arg" == "--help" ]]; then
-            show_help
-            exit 0
-        fi
-    done
+    if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+        show_help
+        exit 0
+    fi
     
     while [[ $# -gt 0 ]]; do
         case $1 in
-            -e|--environment)
-                env="$2"
-                shift 2
-                ;;
             -p|--project)
                 project="$2"
                 shift 2
@@ -114,37 +96,7 @@ parse_args() {
         esac
     done
     
-    echo "$env|$project"
-}
-
-# Get URL for environment
-get_url() {
-    local env="$1"
-    case $env in
-        ephemeral) echo "${EPHEMERAL_URL:-https://YOUR-EPHEMERAL-CLUSTER:6443}" ;;
-        stage) echo "${STAGE_URL:-https://YOUR-STAGE-CLUSTER:6443}" ;;
-        prod) echo "${PROD_URL:-https://YOUR-PROD-CLUSTER:6443}" ;;
-        konflux) echo "$KONFLUX_URL" ;;
-        *)
-            log_error "Invalid environment: $env"
-            log_info "Valid environments: ephemeral, stage, prod, konflux"
-            exit 1
-            ;;
-    esac
-}
-
-# Set KUBECONFIG for environment
-set_kubeconfig() {
-    local env="$1"
-    case $env in
-        konflux)
-            export KUBECONFIG="${KONFLUX_KUBECONFIG:-/Users/lucasbacciotti/development/konflux/konflux-cost-mgmt-dev.yaml}"
-            ;;
-        *)
-            export KUBECONFIG=~/.kube/$env.yml
-            ;;
-    esac
-    log_info "KUBECONFIG set to: $KUBECONFIG"
+    echo "$project"
 }
 
 # Check if oc is available
@@ -155,10 +107,24 @@ check_oc() {
     fi
 }
 
-# Login to cluster
-login_to_cluster() {
-    local url="$1"
+# Set KUBECONFIG for Konflux
+set_kubeconfig() {
+    # Expand tilde in path
+    local kubeconfig_path="${KONFLUX_KUBECONFIG/#\~/$HOME}"
     
+    if [[ ! -f "$kubeconfig_path" ]]; then
+        log_error "Kubeconfig file not found: $kubeconfig_path"
+        log_info "Please create the kubeconfig file with the Konflux OIDC configuration."
+        log_info "The file should be created at: $kubeconfig_path"
+        exit 1
+    fi
+    
+    export KUBECONFIG="$kubeconfig_path"
+    log_info "KUBECONFIG set to: $KUBECONFIG"
+}
+
+# Login to Konflux cluster
+login_to_konflux() {
     log_info "Checking authentication status..."
     
     if oc whoami > /dev/null 2>&1; then
@@ -166,13 +132,14 @@ login_to_cluster() {
         current_user=$(oc whoami)
         log_success "Already authenticated as: $current_user"
     else
-        log_info "Not authenticated. Starting web login..."
-        log_info "URL: $url"
+        log_info "Not authenticated. Starting OIDC login..."
         
-        if oc login --web --server="$url"; then
+        # The kubeconfig should handle OIDC authentication automatically
+        if oc whoami > /dev/null 2>&1; then
             log_success "Successfully logged in!"
         else
-            log_error "Login failed"
+            log_error "Login failed. Please check your kubeconfig file."
+            log_info "Make sure the kubeconfig contains the correct OIDC configuration."
             exit 1
         fi
     fi
@@ -214,23 +181,18 @@ main() {
     check_oc
     
     # Parse arguments
-    local args
-    args=$(parse_args "$@")
-    local env="${args%%|*}"
-    local project="${args##*|}"
+    local project
+    project=$(parse_args "$@")
     
     log_info "=== Konflux Login Helper ==="
-    log_info "Environment: $env"
     log_info "Project: $project"
     echo
     
-    # Get URL and set KUBECONFIG
-    local url
-    url=$(get_url "$env")
-    set_kubeconfig "$env"
+    # Set KUBECONFIG
+    set_kubeconfig
     
     # Login to cluster
-    login_to_cluster "$url"
+    login_to_konflux
     
     # Switch to project
     switch_to_project "$project"
