@@ -114,21 +114,17 @@ set_kubeconfig() {
 login_to_konflux() {
     log_info "Checking authentication status..."
     
-    if oc whoami > /dev/null 2>&1; then
+    # Try to authenticate using oc directly
+    log_info "Attempting OIDC authentication..."
+    if oc whoami >/dev/null 2>&1; then
         local current_user
         current_user=$(oc whoami)
-        log_success "Already authenticated as: $current_user"
+        log_success "Successfully authenticated as: $current_user"
     else
-        log_info "Not authenticated. Starting OIDC login..."
-        
-        # The kubeconfig should handle OIDC authentication automatically
-        if oc whoami > /dev/null 2>&1; then
-            log_success "Successfully logged in!"
-        else
-            log_error "Login failed. Please check your kubeconfig file."
-            log_info "Make sure the kubeconfig contains the correct OIDC configuration."
-            exit 1
-        fi
+        log_error "OIDC authentication failed. Please check your kubeconfig configuration."
+        log_info "Make sure the kubeconfig contains the correct OIDC configuration."
+        log_info "You may need to run: kubectl oidc-login setup"
+        exit 1
     fi
 }
 
