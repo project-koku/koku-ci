@@ -100,17 +100,13 @@ check_oc() {
 
 # Set KUBECONFIG for Konflux
 set_kubeconfig() {
-    # Expand tilde in path
-    local kubeconfig_path="${KONFLUX_KUBECONFIG/#\~/$HOME}"
-    
-    if [[ ! -f "$kubeconfig_path" ]]; then
-        log_error "Kubeconfig file not found: $kubeconfig_path"
-        log_info "Please create the kubeconfig file with the Konflux configuration."
-        log_info "See the documentation for the required YAML content."
+    if [[ ! -f "$KONFLUX_KUBECONFIG" ]]; then
+        log_error "Kubeconfig file not found: $KONFLUX_KUBECONFIG"
+        log_info "The kubeconfig file should be in the same directory as this script."
         exit 1
     fi
     
-    export KUBECONFIG="$kubeconfig_path"
+    export KUBECONFIG="$KONFLUX_KUBECONFIG"
     log_info "KUBECONFIG set to: $KUBECONFIG"
 }
 
