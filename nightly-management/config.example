@@ -1,14 +1,9 @@
-# Konflux Cluster Configuration
-# Copy this file to .env and update with your cluster URLs
+# Konflux Configuration
+# Copy this file to .env and update with your paths
 
-# Konflux Production Cluster
-KONFLUX_URL=https://YOUR-KONFLUX-CLUSTER:6443/
-KONFLUX_KUBECONFIG=/path/to/your/konflux-kubeconfig.yaml
-
-# Other Environments (optional)
-EPHEMERAL_URL=https://YOUR-EPHEMERAL-CLUSTER:6443
-STAGE_URL=https://YOUR-STAGE-CLUSTER:6443
-PROD_URL=https://YOUR-PROD-CLUSTER:6443
+# Path to your Konflux kubeconfig file
+# This should contain the OIDC configuration for Konflux
+KONFLUX_KUBECONFIG=~/.kube/konflux-cost-mgmt-dev.yaml
 
 # Default Project/Namespace
 DEFAULT_PROJECT=cost-mgmt-dev-tenant
