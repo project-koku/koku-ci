@@ -7,20 +7,11 @@
 
 set -euo pipefail
 
-# Load configuration from .env file
+# Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
-ENV_FILE="$SCRIPT_DIR/../.env"
-
-# Load .env file if it exists
-if [[ -f "$ENV_FILE" ]]; then
-    # shellcheck source=/dev/null
-    source "$ENV_FILE"
-fi
-
-# Default values (can be overridden by .env)
-NAMESPACE="${DEFAULT_PROJECT:-cost-mgmt-dev-tenant}"
-CRONJOB_NAME="${CRONJOB_NAME:-koku-scheduled-integration-test}"
-TEST_SCENARIO_NAME="${TEST_SCENARIO_NAME:-koku-scheduled-test-job}"
+NAMESPACE="cost-mgmt-dev-tenant"
+CRONJOB_NAME="koku-scheduled-integration-test"
+TEST_SCENARIO_NAME="koku-scheduled-test-job"
 
 # Colors for output
 RED='\033[0;31m'

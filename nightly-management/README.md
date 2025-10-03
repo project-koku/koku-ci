@@ -4,28 +4,13 @@ This directory contains tools to manage Koku nightly smoke tests (integration te
 
 ## Configuration
 
-**First step: Configure your cluster URLs and settings.**
+**No configuration needed!** Everything is pre-configured and ready to use.
 
-### Setup Configuration File
-
-1. Copy the example configuration:
-   ```bash
-   cp env.example .env
-   ```
-
-2. The `.env` file is already configured with the correct paths:
-   ```bash
-   # Path to your Konflux kubeconfig file
-   # The kubeconfig file is included in this repository
-   KONFLUX_KUBECONFIG=./konflux-cost-mgmt-dev.yaml
-   
-   # Default project/namespace
-   DEFAULT_PROJECT=cost-mgmt-dev-tenant
-   ```
-
-3. No additional setup required! The kubeconfig file is already included in the repository.
-
-**Note**: The `.env` file is ignored by git and will not be committed to the repository.
+The scripts use the following default settings:
+- **Namespace**: `cost-mgmt-dev-tenant`
+- **CronJob**: `koku-scheduled-integration-test`
+- **Test Scenario**: `koku-scheduled-test-job`
+- **Kubeconfig**: `konflux-cost-mgmt-dev.yaml` (included in repository)
 
 ## Login to Konflux
 

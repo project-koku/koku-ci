@@ -14,19 +14,10 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Load configuration from .env file
+# Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
-ENV_FILE="$SCRIPT_DIR/../.env"
-
-# Load .env file if it exists
-if [[ -f "$ENV_FILE" ]]; then
-    # shellcheck source=/dev/null
-    source "$ENV_FILE"
-fi
-
-# Default values (can be overridden by .env)
-DEFAULT_PROJECT="${DEFAULT_PROJECT:-cost-mgmt-dev-tenant}"
-KONFLUX_KUBECONFIG="${KONFLUX_KUBECONFIG:-./konflux-cost-mgmt-dev.yaml}"
+DEFAULT_PROJECT="cost-mgmt-dev-tenant"
+KONFLUX_KUBECONFIG="$SCRIPT_DIR/konflux-cost-mgmt-dev.yaml"
 
 # Helper functions
 log_info() {
