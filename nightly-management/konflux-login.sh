@@ -26,7 +26,7 @@ fi
 
 # Default values (can be overridden by .env)
 DEFAULT_PROJECT="${DEFAULT_PROJECT:-cost-mgmt-dev-tenant}"
-KONFLUX_KUBECONFIG="${KONFLUX_KUBECONFIG:-~/.kube/konflux-cost-mgmt-dev.yaml}"
+KONFLUX_KUBECONFIG="${KONFLUX_KUBECONFIG:-./konflux-cost-mgmt-dev.yaml}"
 
 # Helper functions
 log_info() {
