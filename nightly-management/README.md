@@ -10,35 +10,20 @@ This directory contains tools to manage Koku nightly smoke tests (integration te
 
 1. Copy the example configuration:
    ```bash
-   cp config.example .env
+   cp env.example .env
    ```
 
-2. Edit `.env` with your cluster URLs and paths:
-   ```bash
-   # Edit the .env file with your specific configuration
-   nano .env
-   ```
-
-3. Update the following variables in `.env`:
+2. The `.env` file is already configured with the correct paths:
    ```bash
    # Path to your Konflux kubeconfig file
-   # This should contain the OIDC configuration for Konflux
-   KONFLUX_KUBECONFIG=~/.kube/konflux-cost-mgmt-dev.yaml
+   # The kubeconfig file is included in this repository
+   KONFLUX_KUBECONFIG=./konflux-cost-mgmt-dev.yaml
    
    # Default project/namespace
    DEFAULT_PROJECT=cost-mgmt-dev-tenant
    ```
 
-4. Create your Konflux kubeconfig file:
-   ```bash
-   # Create the kubeconfig directory
-   mkdir -p ~/.kube
-   
-   # Copy the provided kubeconfig template
-   cp konflux-cost-mgmt-dev.yaml ~/.kube/konflux-cost-mgmt-dev.yaml
-   ```
-   
-   The `konflux-cost-mgmt-dev.yaml` file contains the pre-configured OIDC settings for Konflux.
+3. No additional setup required! The kubeconfig file is already included in the repository.
 
 **Note**: The `.env` file is ignored by git and will not be committed to the repository.
 

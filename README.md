@@ -96,10 +96,9 @@ The `nightly-management/` directory contains tools to manage Koku nightly smoke 
 ```bash
 cd nightly-management
 
-# Configure your kubeconfig path (first time only)
-cp config.example .env
-cp konflux-cost-mgmt-dev.yaml ~/.kube/
-nano .env  # Edit with your kubeconfig path
+# Configure your environment (first time only)
+cp env.example .env
+# No additional setup needed - kubeconfig is included in the repo
 
 # Login to Konflux cluster
 make login

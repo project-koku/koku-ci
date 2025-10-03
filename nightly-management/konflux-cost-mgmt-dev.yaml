@@ -2,11 +2,8 @@
 # This file contains the OIDC configuration for accessing Konflux cluster
 # 
 # Usage:
-# 1. Copy this file to ~/.kube/konflux-cost-mgmt-dev.yaml
-# 2. Update the .env file to point to this kubeconfig
-# 3. Use the nightly management scripts to login
-#
-# Reference: https://gitlab.cee.redhat.com/konflux/docs/users/-/blob/main/topics/overview/deployments.md#public-network-konflux-deployment
+# 1. The .env file should point to this kubeconfig file
+# 2. Use the nightly management scripts to login
 
 apiVersion: v1
 clusters:
