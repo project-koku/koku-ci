@@ -114,17 +114,24 @@ set_kubeconfig() {
 login_to_konflux() {
     log_info "Checking authentication status..."
     
-    # Try to authenticate using oc directly
-    log_info "Attempting OIDC authentication..."
+    # Check if already authenticated
     if oc whoami >/dev/null 2>&1; then
         local current_user
         current_user=$(oc whoami)
-        log_success "Successfully authenticated as: $current_user"
+        log_success "Already authenticated as: $current_user"
     else
-        log_error "OIDC authentication failed. Please check your kubeconfig configuration."
-        log_info "Make sure the kubeconfig contains the correct OIDC configuration."
-        log_info "You may need to run: kubectl oidc-login setup"
-        exit 1
+        log_info "Not authenticated. Starting web login..."
+        
+        # Use oc login --web like the working oc-login function
+        local server_url="https://api.stone-prd-rh01.pg1f.p1.openshiftapps.com:6443"
+        log_info "Opening browser for authentication to: $server_url"
+        
+        if oc login --web --server="$server_url"; then
+            log_success "Successfully logged in!"
+        else
+            log_error "Login failed. Please try again."
+            exit 1
+        fi
     fi
 }
 
