@@ -1,0 +1,38 @@
+# Konflux Kubeconfig for Cost Management Team
+# This file contains the OIDC configuration for accessing Konflux cluster
+# 
+# Usage:
+# 1. Copy this file to ~/.kube/konflux-cost-mgmt-dev.yaml
+# 2. Update the .env file to point to this kubeconfig
+# 3. Use the nightly management scripts to login
+#
+# Reference: https://gitlab.cee.redhat.com/konflux/docs/users/-/blob/main/topics/overview/deployments.md#public-network-konflux-deployment
+
+apiVersion: v1
+clusters:
+  - cluster:
+      server: https://api-toolchain-host-operator.apps.stone-prd-host1.wdlc.p1.openshiftapps.com//workspaces/cost-mgmt-dev
+    name: konflux
+contexts:
+  - context:
+      cluster: konflux
+      namespace: cost-mgmt-dev-tenant
+      user: oidc
+    name: konflux-cost-mgmt-dev
+current-context: konflux-cost-mgmt-dev
+kind: Config
+preferences: {}
+users:
+  - name: oidc
+    user:
+      exec:
+        apiVersion: client.authentication.k8s.io/v1beta1
+        args:
+          - oidc-login
+          - get-token
+          - --oidc-issuer-url=https://sso.redhat.com/auth/realms/redhat-external
+          - --oidc-client-id=rhoas-cli-prod
+        command: kubectl
+        env: null
+        interactiveMode: IfAvailable
+        provideClusterInfo: false

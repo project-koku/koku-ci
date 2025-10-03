@@ -98,6 +98,7 @@ cd nightly-management
 
 # Configure your kubeconfig path (first time only)
 cp config.example .env
+cp konflux-cost-mgmt-dev.yaml ~/.kube/
 nano .env  # Edit with your kubeconfig path
 
 # Login to Konflux cluster

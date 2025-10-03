@@ -2,7 +2,7 @@
 # Copy this file to .env and update with your paths
 
 # Path to your Konflux kubeconfig file
-# This should contain the OIDC configuration for Konflux
+# Copy konflux-cost-mgmt-dev.yaml to this location
 KONFLUX_KUBECONFIG=~/.kube/konflux-cost-mgmt-dev.yaml
 
 # Default Project/Namespace

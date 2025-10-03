@@ -29,14 +29,16 @@ This directory contains tools to manage Koku nightly smoke tests (integration te
    DEFAULT_PROJECT=cost-mgmt-dev-tenant
    ```
 
-4. Create your Konflux kubeconfig file with the OIDC configuration:
+4. Create your Konflux kubeconfig file:
    ```bash
-   # Create the kubeconfig file with the required OIDC configuration
+   # Create the kubeconfig directory
    mkdir -p ~/.kube
-   nano ~/.kube/konflux-cost-mgmt-dev.yaml
+   
+   # Copy the provided kubeconfig template
+   cp konflux-cost-mgmt-dev.yaml ~/.kube/konflux-cost-mgmt-dev.yaml
    ```
    
-   The kubeconfig should contain the OIDC configuration as shown in the Konflux documentation.
+   The `konflux-cost-mgmt-dev.yaml` file contains the pre-configured OIDC settings for Konflux.
 
 **Note**: The `.env` file is ignored by git and will not be committed to the repository.
 
