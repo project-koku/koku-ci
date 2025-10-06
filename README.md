@@ -87,6 +87,27 @@ Runs `bonfire deploy-iqe-cji` with filter and marker based on the labels applied
 
 Uploads artifacts to S3 and release namespace.
 
+### Nightly Build Management ###
+
+The `nightly-management/` directory contains tools to manage Koku nightly smoke tests that run automatically.
+
+#### Quick Start ####
+
+```bash
+cd nightly-management
+
+# Login to Konflux cluster
+make login
+
+# Show current status
+make status
+
+# Trigger manual nightly build
+make trigger
+```
+
+For more information, see the [nightly-management README](nightly-management/README.md).
+
 
 [Tekton pipelines and tasks]: https://tekton.dev/docs/pipelines/
 [koku]: https://github.com/project-koku/koku
