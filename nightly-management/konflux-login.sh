@@ -121,7 +121,7 @@ login_to_konflux() {
     else
         log_info "Not authenticated. Starting web login..."
         
-        # Use oc login --web like the working oc-login function
+        # Use the correct Konflux server URL for the workspace
         local server_url="https://api.stone-prd-rh01.pg1f.p1.openshiftapps.com:6443"
         log_info "Opening browser for authentication to: $server_url"
         

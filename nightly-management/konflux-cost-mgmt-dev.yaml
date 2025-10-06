@@ -4,7 +4,7 @@ clusters:
     server: https://api.stone-prd-rh01.pg1f.p1.openshiftapps.com:6443
   name: api-stone-prd-rh01-pg1f-p1-openshiftapps-com:6443
 - cluster:
-    server: https://api.stone-prd-rh01.pg1f.p1.openshiftapps.com:6443
+    server: https://api-toolchain-host-operator.apps.stone-prd-host1.wdlc.p1.openshiftapps.com//workspaces/cost-mgmt-dev
   name: konflux
 contexts:
 - context:
