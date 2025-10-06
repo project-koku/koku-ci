@@ -84,10 +84,10 @@ show_status() {
     echo
     log_info "=== Running Pipelines ==="
     local running_pipelines
-    running_pipelines=$(kubectl get pipelineruns -n "$NAMESPACE" -o jsonpath='{.items[?(@.status.phase=="Running")].metadata.name}' 2>/dev/null | wc -w)
+    running_pipelines=$(kubectl get pipelineruns -n "$NAMESPACE" -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.conditions[-1].reason}{"\n"}{end}' 2>/dev/null | grep -E '\tRunning$' | wc -l)
     if [[ "$running_pipelines" -gt 0 ]]; then
         log_info "Currently running: $running_pipelines pipeline(s)"
-        kubectl get pipelineruns -n "$NAMESPACE" -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\t"}{.status.phase}{"\t"}{.status.startTime}{"\n"}{end}' 2>/dev/null | sort
+        kubectl get pipelineruns -n "$NAMESPACE" -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.conditions[-1].reason}{"\t"}{.status.startTime}{"\n"}{end}' 2>/dev/null | grep -E '\tRunning\t' | sort
     else
         log_info "No pipelines currently running"
     fi
@@ -132,7 +132,18 @@ show_jobs() {
 show_pipelines() {
     local count=${1:-10}
     log_info "=== Last $count PipelineRuns ==="
-    kubectl get pipelineruns -n "$NAMESPACE" -o=custom-columns=NAME:.metadata.name,STATUS:.status.conditions[-1].type,CREATED:.metadata.creationTimestamp --sort-by=.metadata.creationTimestamp | tail -"$count"
+    kubectl get pipelineruns -n "$NAMESPACE" --sort-by=.metadata.creationTimestamp | tail -"$count"
+    
+    echo
+    log_info "=== Running Pipelines ==="
+    local running_pipelines
+    running_pipelines=$(kubectl get pipelineruns -n "$NAMESPACE" -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.conditions[-1].reason}{"\n"}{end}' 2>/dev/null | grep -E '\tRunning$' | wc -l)
+    if [[ "$running_pipelines" -gt 0 ]]; then
+        log_info "Currently running: $running_pipelines pipeline(s)"
+        kubectl get pipelineruns -n "$NAMESPACE" -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.conditions[-1].reason}{"\t"}{.status.startTime}{"\n"}{end}' 2>/dev/null | grep -E '\tRunning\t' | sort
+    else
+        log_info "No pipelines currently running"
+    fi
 }
 
 # Show job logs
