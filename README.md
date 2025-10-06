@@ -89,7 +89,7 @@ Uploads artifacts to S3 and release namespace.
 
 ### Koku CI Management ###
 
-The `koku-ci-management/` directory contains tools to manage Koku CI, including the Scheduled Test Job that run automatically.
+The `koku-ci-management/` directory contains tools to manage Koku CI, including the Scheduled Test Job that runs automatically.
 
 #### Quick Start ####
 
