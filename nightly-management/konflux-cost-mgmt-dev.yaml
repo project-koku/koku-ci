@@ -10,19 +10,20 @@ contexts:
 - context:
     cluster: api-stone-prd-rh01-pg1f-p1-openshiftapps-com:6443
     namespace: cost-mgmt-dev-tenant
-    user: YOUR-USERNAME/api-stone-prd-rh01-pg1f-p1-openshiftapps-com:6443
-  name: cost-mgmt-dev-tenant/api-stone-prd-rh01-pg1f-p1-openshiftapps-com:6443/YOUR-USERNAME
+    user: lbacciot/api-stone-prd-rh01-pg1f-p1-openshiftapps-com:6443
+  name: cost-mgmt-dev-tenant/api-stone-prd-rh01-pg1f-p1-openshiftapps-com:6443/lbacciot
 - context:
     cluster: konflux
     namespace: cost-mgmt-dev-tenant
     user: oidc
   name: konflux-cost-mgmt-dev
-current-context: cost-mgmt-dev-tenant/api-stone-prd-rh01-pg1f-p1-openshiftapps-com:6443/YOUR-USERNAME
+current-context: cost-mgmt-dev-tenant/api-stone-prd-rh01-pg1f-p1-openshiftapps-com:6443/lbacciot
 kind: Config
 preferences: {}
 users:
-- name: YOUR-USERNAME/api-stone-prd-rh01-pg1f-p1-openshiftapps-com:6443
+- name: lbacciot/api-stone-prd-rh01-pg1f-p1-openshiftapps-com:6443
   user:
+    token: sha256~8lfOFvvtyb1GkRNu9HdoIILiNU-fvSayFgMhzTc1erQ
 - name: oidc
   user:
     exec:
