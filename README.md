@@ -87,6 +87,27 @@ Runs `bonfire deploy-iqe-cji` with filter and marker based on the labels applied
 
 Uploads artifacts to S3 and release namespace.
 
+### Koku CI Management ###
+
+The `koku-ci-management/` directory contains tools to manage Koku CI, including the Scheduled Test Job that runs automatically.
+
+#### Quick Start ####
+
+```bash
+cd koku-ci-management
+
+# Login to Konflux cluster
+make login
+
+# Show current status
+make status
+
+# Trigger manual test job
+make trigger
+```
+
+For more information, see the [koku-ci-management README](koku-ci-management/README.md).
+
 
 [Tekton pipelines and tasks]: https://tekton.dev/docs/pipelines/
 [koku]: https://github.com/project-koku/koku
