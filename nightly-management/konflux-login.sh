@@ -3,7 +3,6 @@
 # Konflux Login Helper
 # Script to simplify login to Konflux cluster
 # Repository: koku-ci
-# Author: Cost Management Team
 
 set -euo pipefail
 

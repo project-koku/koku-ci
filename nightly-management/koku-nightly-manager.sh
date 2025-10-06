@@ -3,7 +3,6 @@
 # Koku Nightly Build Manager
 # Script to simplify management of Koku nightly smoke tests
 # Repository: koku-ci
-# Author: Cost Management Team
 
 set -euo pipefail
 

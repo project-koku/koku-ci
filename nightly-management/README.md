@@ -14,45 +14,32 @@ The scripts use the following default settings:
 
 ## Login to Konflux
 
-**Second step: Always login to Konflux cluster before using any commands.**
+**Always login to Konflux cluster before using any commands.**
+A browser window will open to complete the login process.
 
-### Using Make (Recommended)
+### Using Make
 ```bash
 # Navigate to the nightly-management directory
 cd nightly-management
 
 # Login to Konflux cluster
 make login
+
+# Login to Konflux with specific project
+make login -p koku-dev-tenant
 ```
 
-### Using Script Directly
-```bash
-# Login to Konflux with default project (cost-mgmt-dev-tenant)
-./koku-nightly-manager.sh login
-
-# Or use the dedicated login helper
-./konflux-login.sh
-```
 
 ### Login Helper Options
 ```bash
 # Login to Konflux with default project
 ./konflux-login.sh
 
-# Login to Konflux with specific project
-./konflux-login.sh -p koku-dev-tenant
-
 # Show help
 ./konflux-login.sh --help
 ```
 
-## Quick Start
-
-1. **Configure** your cluster settings (see Configuration section above)
-2. **Login** to Konflux cluster (see Login section above)
-3. **Use** the nightly management commands:
-
-### Using Make (Recommended)
+### Available Commands (Using Make)
 ```bash
 # Show current status
 make status
@@ -68,6 +55,9 @@ make logs
 
 # Watch jobs in real-time
 make watch
+
+# Clean up jobs older than 7 days
+make cleanup
 ```
 
 ### Using Script Directly
@@ -97,47 +87,17 @@ The nightly build system:
 3. **Triggers integration tests** against that snapshot
 4. **Validates** that the system is working correctly
 
-## Manual Operations
 
-### Login to Konflux
-```bash
-# Using make (recommended)
-make login
 
-# Using script directly
-./koku-nightly-manager.sh login
 
-# Using login helper
-./konflux-login.sh
-```
 
-### Trigger Manual Build
-```bash
-make trigger
-# or
-./koku-nightly-manager.sh trigger
-```
 
-### Monitor Execution
-```bash
-# Watch jobs in real-time
-make watch
 
-# Check status
-make status
 
-# View logs
-make logs
-```
 
-### Cleanup Old Jobs
-```bash
-# Clean up jobs older than 7 days
-make cleanup
 
-# Clean up jobs older than 14 days
-./koku-nightly-manager.sh cleanup 14
-```
+
+
 
 ## Troubleshooting
 
@@ -160,25 +120,10 @@ kubectl logs job/<job-name> -n cost-mgmt-dev-tenant
 
 1. **Not Logged In**: If you get authentication errors, run `make login` first
 2. **Kubeconfig Missing**: If you get "kubeconfig file not found", create the kubeconfig file with OIDC configuration
-3. **ServiceAccount Missing**: If jobs fail with "serviceaccount not found", the `koku-pull` ServiceAccount might be missing
 4. **No Snapshots**: If no valid snapshots are found, check if the Koku component has been built and released recently
 5. **Permission Issues**: Ensure you're logged in with proper permissions using `make login`
 
-## Configuration
 
-The nightly build configuration is managed in the `konflux-release-data` repository:
-
-- **CronJob**: `koku-scheduled-integration-test`
-- **ServiceAccount**: `koku-pull`
-- **Test Scenario**: `koku-scheduled-test-job`
-- **Namespace**: `cost-mgmt-dev-tenant`
-
-## Schedule
-
-- **Frequency**: Weekly
-- **Day**: Saturdays
-- **Time**: 2:00 AM UTC
-- **Cron Expression**: `0 2 * * 6`
 
 ## Related Documentation
 
@@ -186,8 +131,3 @@ The nightly build configuration is managed in the `konflux-release-data` reposit
 - [Koku CI Repository](../README.md)
 - [Konflux Release Data](https://github.com/redhat-appstudio/konflux-release-data)
 
-## Team Information
-
-- **Repository**: koku-ci
-- **Team**: Cost Management
-- **Maintainers**: Cost Management Team
