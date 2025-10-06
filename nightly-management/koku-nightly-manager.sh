@@ -76,6 +76,21 @@ show_status() {
     echo
     log_info "=== Recent Jobs ==="
     kubectl get jobs -n "$NAMESPACE" --sort-by=.metadata.creationTimestamp | tail -5
+    
+    echo
+    log_info "=== Recent PipelineRuns ==="
+    kubectl get pipelineruns -n "$NAMESPACE" --sort-by=.metadata.creationTimestamp | tail -5
+    
+    echo
+    log_info "=== Running Pipelines ==="
+    local running_pipelines
+    running_pipelines=$(kubectl get pipelineruns -n "$NAMESPACE" -o jsonpath='{.items[?(@.status.phase=="Running")].metadata.name}' 2>/dev/null | wc -w)
+    if [[ "$running_pipelines" -gt 0 ]]; then
+        log_info "Currently running: $running_pipelines pipeline(s)"
+        kubectl get pipelineruns -n "$NAMESPACE" -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\t"}{.status.phase}{"\t"}{.status.startTime}{"\n"}{end}' 2>/dev/null | sort
+    else
+        log_info "No pipelines currently running"
+    fi
 }
 
 # Trigger manual nightly build
@@ -111,6 +126,13 @@ show_jobs() {
     local count=${1:-10}
     log_info "=== Last $count Jobs ==="
     kubectl get jobs -n "$NAMESPACE" -o=custom-columns=NAME:.metadata.name,STATUS:.status.conditions[-1].type,CREATED:.metadata.creationTimestamp --sort-by=.metadata.creationTimestamp | tail -"$count"
+}
+
+# Show recent pipelines
+show_pipelines() {
+    local count=${1:-10}
+    log_info "=== Last $count PipelineRuns ==="
+    kubectl get pipelineruns -n "$NAMESPACE" -o=custom-columns=NAME:.metadata.name,STATUS:.status.conditions[-1].type,CREATED:.metadata.creationTimestamp --sort-by=.metadata.creationTimestamp | tail -"$count"
 }
 
 # Show job logs
@@ -204,9 +226,10 @@ USAGE:
 
 COMMANDS:
     login               Login to Konflux cluster and switch to correct project
-    status              Show current CronJob status and recent jobs
+    status              Show current CronJob status, recent jobs and pipelines
     trigger             Trigger a manual nightly build
     jobs [count]        Show recent jobs (default: 10)
+    pipelines [count]   Show recent PipelineRuns (default: 10)
     logs <job-name>     Show logs for a specific job
     watch               Watch jobs in real-time
     pods <job-name>     Show pods for a specific job
@@ -218,6 +241,7 @@ EXAMPLES:
     $0 status                    # Show current status
     $0 trigger                   # Trigger manual build
     $0 jobs 5                    # Show last 5 jobs
+    $0 pipelines 5               # Show last 5 PipelineRuns
     $0 logs koku-manual-run-123  # Show logs for specific job
     $0 watch                     # Watch jobs in real-time
     $0 cleanup 14                # Clean up jobs older than 14 days
@@ -251,6 +275,10 @@ main() {
         "jobs")
             check_prerequisites
             show_jobs "${2:-10}"
+            ;;
+        "pipelines")
+            check_prerequisites
+            show_pipelines "${2:-10}"
             ;;
         "logs")
             check_prerequisites

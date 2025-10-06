@@ -2,7 +2,7 @@
 # Makefile to simplify nightly build operations
 # Repository: koku-ci
 
-.PHONY: help login status trigger jobs logs watch pods cleanup
+.PHONY: help login status trigger jobs pipelines logs watch pods cleanup
 
 # Default target
 help:
@@ -11,9 +11,10 @@ help:
 	@echo ""
 	@echo "Available targets:"
 	@echo "  login      - Login to Konflux cluster and switch to correct project"
-	@echo "  status     - Show current CronJob status and recent jobs"
+	@echo "  status     - Show current CronJob status, recent jobs and pipelines"
 	@echo "  trigger    - Trigger a manual nightly build"
 	@echo "  jobs       - Show recent jobs (last 10)"
+	@echo "  pipelines  - Show recent PipelineRuns (last 10)"
 	@echo "  logs       - Show logs for the most recent job"
 	@echo "  watch      - Watch jobs in real-time"
 	@echo "  pods       - Show pods for the most recent job"
@@ -23,6 +24,7 @@ help:
 	@echo "  make login"
 	@echo "  make status"
 	@echo "  make trigger"
+	@echo "  make pipelines"
 	@echo "  make logs"
 	@echo ""
 	@echo "Repository: koku-ci"
@@ -43,6 +45,10 @@ trigger:
 # Show recent jobs
 jobs:
 	@./koku-nightly-manager.sh jobs
+
+# Show recent pipelines
+pipelines:
+	@./koku-nightly-manager.sh pipelines
 
 # Show logs for most recent job
 logs:
