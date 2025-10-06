@@ -50,6 +50,9 @@ make trigger
 # Show recent jobs
 make jobs
 
+# Show recent pipeline runs
+make pipelines
+
 # Show logs for most recent job
 make logs
 
