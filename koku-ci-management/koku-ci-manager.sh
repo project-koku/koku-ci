@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Koku Nightly Build Manager
-# Script to simplify management of Koku nightly smoke tests
+# Koku CI Management
+# Script to simplify management of Koku CI scheduled test jobs
 # Repository: koku-ci
 
 set -euo pipefail
@@ -55,7 +55,7 @@ check_prerequisites() {
 
 # Show current status
 show_status() {
-    log_info "=== Koku Nightly Build Status ==="
+    log_info "=== Koku CI Management Status ==="
     echo
     
     # CronJob schedule
@@ -93,11 +93,11 @@ show_status() {
     fi
 }
 
-# Trigger manual nightly build
+# Trigger manual scheduled test job
 trigger_manual() {
     local job_name="koku-manual-run-$(date +%Y%m%d-%H%M%S)"
     
-    log_info "Triggering manual nightly build: $job_name"
+    log_info "Triggering manual scheduled test job: $job_name"
     
     # Use the complex command from documentation
     kubectl get cronjob "$CRONJOB_NAME" -n "$NAMESPACE" -o json | \
@@ -117,7 +117,7 @@ trigger_manual() {
       .spec = .spec.jobTemplate.spec' | \
     kubectl create -f -
     
-    log_success "Manual nightly build triggered: $job_name"
+    log_success "Manual scheduled test job triggered: $job_name"
     log_info "You can monitor it with: kubectl get jobs -n $NAMESPACE --sort-by=.metadata.creationTimestamp"
 }
 
@@ -230,7 +230,7 @@ login_to_konflux() {
 # Show help
 show_help() {
     cat << EOF
-Koku Nightly Build Manager
+Koku CI Management
 
 USAGE:
     $0 [COMMAND] [OPTIONS]
@@ -238,7 +238,7 @@ USAGE:
 COMMANDS:
     login               Login to Konflux cluster and switch to correct project
     status              Show current CronJob status, recent jobs and pipelines
-    trigger             Trigger a manual nightly build
+    trigger             Trigger a manual scheduled test job
     jobs [count]        Show recent jobs (default: 10)
     pipelines [count]   Show recent PipelineRuns (default: 10)
     logs <job-name>     Show logs for a specific job

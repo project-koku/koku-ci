@@ -190,7 +190,7 @@ main() {
     show_status
     
     log_success "Ready to use Konflux cluster!"
-    log_info "You can now run nightly build commands:"
+    log_info "You can now run Koku CI management commands:"
     log_info "  make status"
     log_info "  make trigger"
     log_info "  make logs"

@@ -1,6 +1,6 @@
-# Koku Nightly Build Management
+# Koku CI Management
 
-This directory contains tools to manage Koku nightly smoke tests (integration tests) that run automatically every Saturday at 2 AM UTC.
+This directory contains tools to manage Koku CI scheduled test jobs (integration tests) that run automatically every Saturday at 2 AM UTC.
 
 ## Configuration
 
@@ -19,8 +19,8 @@ A browser window will open to complete the login process.
 
 ### Using Make
 ```bash
-# Navigate to the nightly-management directory
-cd nightly-management
+# Navigate to the koku-ci-management directory
+cd koku-ci-management
 
 # Login to Konflux cluster
 make login
@@ -44,7 +44,7 @@ make login -p koku-dev-tenant
 # Show current status
 make status
 
-# Trigger manual nightly build
+# Trigger manual scheduled test job
 make trigger
 
 # Show recent jobs
@@ -63,24 +63,24 @@ make cleanup
 ### Using Script Directly
 ```bash
 # Show help
-./koku-nightly-manager.sh help
+./koku-ci-manager.sh help
 
 # Show current status
-./koku-nightly-manager.sh status
+./koku-ci-manager.sh status
 
 # Trigger manual build
-./koku-nightly-manager.sh trigger
+./koku-ci-manager.sh trigger
 
 # Show last 5 jobs
-./koku-nightly-manager.sh jobs 5
+./koku-ci-manager.sh jobs 5
 
 # Show logs for specific job
-./koku-nightly-manager.sh logs koku-manual-run-20250127-1430
+./koku-ci-manager.sh logs koku-manual-run-20250127-1430
 ```
 
 ## What It Does
 
-The nightly build system:
+The scheduled test job system:
 
 1. **Automatically runs** every Saturday at 2 AM UTC via CronJob
 2. **Finds the latest released snapshot** of the Koku component
