@@ -12,6 +12,8 @@ The scripts use the following default settings:
 - **Test Scenario**: `koku-scheduled-test-job`
 - **Kubeconfig**: `konflux-cost-mgmt-dev.yaml` (included in repository)
 
+> **Note**: The `konflux-cost-mgmt-dev.yaml` file is tracked in git but ignored for local changes. This prevents accidentally committing sensitive tokens that are added during authentication. The file will be modified locally when you login, but these changes won't be staged for commit.
+
 ## Login to Konflux
 
 **Always login to Konflux cluster before using any commands.**

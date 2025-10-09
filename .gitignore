@@ -1,0 +1,3 @@
+# Kubeconfig files - these get modified locally with sensitive tokens
+koku-ci-management/konflux-cost-mgmt-dev.yaml
+
