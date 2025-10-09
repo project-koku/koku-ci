@@ -195,15 +195,11 @@ spec:
       when:
         - input: $(tasks.status)
           operator: in
-          values: [ "Failed", "Cancelled" ]
-        - input: "{{ event_type }}"
-          operator: in
-          values:
-            - "push"
+          values: [ "Failed" ]
       params:
         - name: message
           value: |
-            :x: Pipeline `$(context.pipelineRun.name)` has $(tasks.status).
+            :x: Pipeline `$(context.pipelineRun.name)` failed.
             See details: <https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com/ns/cost-mgmt-dev-tenant/applications/$(params.APP_NAME)/pipelineruns/$(context.pipelineRun.name)|Pipeline Run>
         - name: secret-name
           value: "slack-webhook-notification-secret"
