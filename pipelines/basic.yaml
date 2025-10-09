@@ -369,15 +369,42 @@ spec:
       when:
         - input: $(tasks.status)
           operator: in
-          values: [ "Failed", "Cancelled" ]
-        - input: "{{ event_type }}"
-          operator: in
-          values:
-            - "push"
+          values: [ "Failed" ]
+        - input: "$(params.IS_SCHEDULED_TEST_JOB)"
+          operator: notin
+          values: [ "true" ]
       params:
         - name: message
           value: |
-            :x: Pipeline `$(context.pipelineRun.name)` has $(tasks.status).
+            :x: Pipeline `$(context.pipelineRun.name)` failed.
+            See details: <https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com/ns/cost-mgmt-dev-tenant/applications/$(params.APP_NAME)/pipelineruns/$(context.pipelineRun.name)|Pipeline Run>
+        - name: secret-name
+          value: "slack-webhook-notification-secret"
+        - name: key-name
+          value: "webhook-url"
+      taskRef:
+        params:
+          - name: name
+            value: slack-webhook-notification
+          - name: bundle
+            value: quay.io/konflux-ci/tekton-catalog/task-slack-webhook-notification:0.1@sha256:4e68fe2225debc256d403b828ed358345bb56d03327b46d55cb6c42911375750
+          - name: kind
+            value: task
+        resolver: bundles
+
+    - name: notify-scheduled-job-failure
+      when:
+        - input: "$(params.IS_SCHEDULED_TEST_JOB)"
+          operator: in
+          values: [ "true" ]
+        - input: $(tasks.status)
+          operator: in
+          values: [ "Failed" ]
+      params:
+        - name: message
+          value: |
+            :warning: Scheduled test job `$(context.pipelineRun.name)` failed!
+            Component: $(params.COMPONENT_NAME)
             See details: <https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com/ns/cost-mgmt-dev-tenant/applications/$(params.APP_NAME)/pipelineruns/$(context.pipelineRun.name)|Pipeline Run>
         - name: secret-name
           value: "slack-webhook-notification-secret"
