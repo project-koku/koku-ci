@@ -89,7 +89,36 @@ spec:
       value: $(finally.teardown.results.ARTIFACTS_URL)
 
   tasks:
+    - name: debug-pipeline-context
+      taskSpec:
+        steps:
+          - name: print-context
+            image: registry.access.redhat.com/ubi9/ubi-minimal:latest
+            script: |
+              #!/bin/bash
+              echo "=========================================="
+              echo "🔍 DEBUG: Pipeline Context Information"
+              echo "=========================================="
+              echo ""
+              echo "📋 Pipeline Run Name: $(context.pipelineRun.name)"
+              echo "🏷️  Pipeline Run Namespace: $(context.pipelineRun.namespace)"
+              echo ""
+              echo "🔍 Attempting to access event-type label:"
+              echo "   Method 1 (with quotes and escape): $(context.pipelineRun.labels['pac\.test\.appstudio\.openshift\.io/event-type'])"
+              echo ""
+              echo "🔍 Other potentially useful labels:"
+              echo "   Method 2 (without escape): $(context.pipelineRun.labels['pac.test.appstudio.openshift.io/event-type'])"
+              echo ""
+              echo "📊 Parameters received:"
+              echo "   COMPONENT_NAME: $(params.COMPONENT_NAME)"
+              echo "   APP_NAME: $(params.APP_NAME)"
+              echo ""
+              echo "✅ Debug task completed. Check logs for event-type value!"
+              echo "=========================================="
+
     - name: reserve-namespace
+      runAfter:
+        - debug-pipeline-context
       params:
         - name: NS_REQUESTER
           value: "$(context.pipelineRun.name)"
@@ -196,10 +225,13 @@ spec:
         - input: $(tasks.status)
           operator: in
           values: [ "Failed" ]
+        - input: $(context.pipelineRun.labels['pac\.test\.appstudio\.openshift\.io/event-type'])
+          operator: in
+          values: [ "push" ]
       params:
         - name: message
           value: |
-            :x: Pipeline `$(context.pipelineRun.name)` failed.
+            :x: Pipeline `$(context.pipelineRun.name)` failed after merge to main.
             See details: <https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com/ns/cost-mgmt-dev-tenant/applications/$(params.APP_NAME)/pipelineruns/$(context.pipelineRun.name)|Pipeline Run>
         - name: secret-name
           value: "slack-webhook-notification-secret"
