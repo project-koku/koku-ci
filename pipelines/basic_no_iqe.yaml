@@ -103,11 +103,12 @@ spec:
               echo "📋 Pipeline Run Name: $(context.pipelineRun.name)"
               echo "🏷️  Pipeline Run Namespace: $(context.pipelineRun.namespace)"
               echo ""
-              echo "🔍 Attempting to access event-type label:"
-              echo "   Method 1 (with quotes and escape): $(context.pipelineRun.labels['pac\.test\.appstudio\.openshift\.io/event-type'])"
+              echo "🔍 Attempting to access event-type via ANNOTATIONS:"
+              echo "   Method 1 (with quotes and escape): $(context.pipelineRun.annotations['pac\.test\.appstudio\.openshift\.io/event-type'])"
               echo ""
-              echo "🔍 Other potentially useful labels:"
-              echo "   Method 2 (without escape): $(context.pipelineRun.labels['pac.test.appstudio.openshift.io/event-type'])"
+              echo "🔍 Other methods:"
+              echo "   Method 2 (without escape): $(context.pipelineRun.annotations['pac.test.appstudio.openshift.io/event-type'])"
+              echo "   Method 3 (dot notation): $(context.pipelineRun.annotations.pac\.test\.appstudio\.openshift\.io/event-type)"
               echo ""
               echo "📊 Parameters received:"
               echo "   COMPONENT_NAME: $(params.COMPONENT_NAME)"
@@ -225,7 +226,7 @@ spec:
         - input: $(tasks.status)
           operator: in
           values: [ "Failed" ]
-        - input: $(context.pipelineRun.labels['pac\.test\.appstudio\.openshift\.io/event-type'])
+        - input: $(context.pipelineRun.annotations['pac\.test\.appstudio\.openshift\.io/event-type'])
           operator: in
           values: [ "push" ]
       params:
