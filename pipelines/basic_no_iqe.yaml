@@ -89,45 +89,7 @@ spec:
       value: $(finally.teardown.results.ARTIFACTS_URL)
 
   tasks:
-    - name: get-event-metadata
-      taskSpec:
-        results:
-          - name: event-type
-            description: The event type from PipelineRun annotations
-          - name: branch
-            description: The branch from PipelineRun annotations
-        steps:
-          - name: extract-metadata
-            image: registry.access.redhat.com/ubi9/ubi-minimal:latest
-            env:
-              - name: EVENT_TYPE
-                valueFrom:
-                  fieldRef:
-                    fieldPath: metadata.annotations['pac.test.appstudio.openshift.io/event-type']
-              - name: BRANCH
-                valueFrom:
-                  fieldRef:
-                    fieldPath: metadata.annotations['pac.test.appstudio.openshift.io/branch']
-            script: |
-              #!/bin/bash
-              echo "=========================================="
-              echo "🔍 Extracting event metadata from PipelineRun"
-              echo "=========================================="
-              echo ""
-              echo "EVENT_TYPE: ${EVENT_TYPE}"
-              echo "BRANCH: ${BRANCH}"
-              echo ""
-              
-              # Write to task results
-              echo -n "${EVENT_TYPE}" > $(results.event-type.path)
-              echo -n "${BRANCH}" > $(results.branch.path)
-              
-              echo "✅ Metadata extracted successfully"
-              echo "=========================================="
-
     - name: reserve-namespace
-      runAfter:
-        - get-event-metadata
       params:
         - name: NS_REQUESTER
           value: "$(context.pipelineRun.name)"
@@ -234,10 +196,10 @@ spec:
         - input: $(tasks.status)
           operator: in
           values: [ "Failed" ]
-        - input: $(tasks.get-event-metadata.results.event-type)
+        - input: $(tasks.init-pipeline-context.results.event-type)
           operator: in
           values: [ "push" ]
-        - input: $(tasks.get-event-metadata.results.branch)
+        - input: $(tasks.init-pipeline-context.results.branch)
           operator: in
           values: [ "main" ]
       params:
