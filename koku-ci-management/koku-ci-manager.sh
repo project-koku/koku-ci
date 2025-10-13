@@ -11,6 +11,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 NAMESPACE="cost-mgmt-dev-tenant"
 CRONJOB_NAME="koku-scheduled-integration-test"
 TEST_SCENARIO_NAME="koku-scheduled-test-job"
+KONFLUX_KUBECONFIG="$SCRIPT_DIR/konflux-cost-mgmt-dev.yaml"
+
+# Set KUBECONFIG to use Konflux credentials
+if [[ -f "$KONFLUX_KUBECONFIG" ]]; then
+    export KUBECONFIG="$KONFLUX_KUBECONFIG"
+fi
 
 # Colors for output
 RED='\033[0;31m'
