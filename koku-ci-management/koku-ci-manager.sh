@@ -59,6 +59,60 @@ check_prerequisites() {
     fi
 }
 
+# Check CronJob health and detect failed executions
+check_cronjob_health() {
+    local last_schedule
+    local last_success
+    local failed_job_name
+    
+    last_schedule=$(kubectl get cronjob "$CRONJOB_NAME" -n "$NAMESPACE" -o jsonpath='{.status.lastScheduleTime}' 2>/dev/null || echo "")
+    last_success=$(kubectl get cronjob "$CRONJOB_NAME" -n "$NAMESPACE" -o jsonpath='{.status.lastSuccessfulTime}' 2>/dev/null || echo "")
+    
+    if [[ -z "$last_schedule" ]]; then
+        log_warning "CronJob has never been executed"
+        return 1
+    fi
+    
+    if [[ -z "$last_success" ]]; then
+        log_error "CronJob has been scheduled but NEVER succeeded!"
+        log_info "Last scheduled: $last_schedule"
+        return 1
+    fi
+    
+    # Compare timestamps
+    if [[ "$last_schedule" != "$last_success" ]]; then
+        log_error "FAILURE DETECTED! Last scheduled job did not complete successfully"
+        log_info "Last scheduled: $last_schedule"
+        log_info "Last successful: $last_success"
+        echo
+        
+        # Try to find the failed job in recent events
+        log_warning "Checking for recent failures..."
+        local recent_events
+        recent_events=$(kubectl get events -n "$NAMESPACE" --sort-by='.lastTimestamp' 2>/dev/null | \
+                       grep -E "(FailedCreatePodSandBox|Failed|Error|CrashLoopBackOff|ImagePullBackOff)" | \
+                       grep "$CRONJOB_NAME" | tail -5)
+        
+        if [[ -n "$recent_events" ]]; then
+            echo "$recent_events"
+        else
+            log_info "No recent error events found (job may have been deleted)"
+        fi
+        
+        echo
+        log_warning "The scheduled job was executed but failed to complete."
+        log_warning "This could be due to:"
+        log_warning "  - Infrastructure issues (node problems, container runtime)"
+        log_warning "  - Resource constraints (CPU, memory)"
+        log_warning "  - Application errors in the job"
+        
+        return 1
+    else
+        log_success "CronJob health: OK (last execution was successful)"
+        return 0
+    fi
+}
+
 # Show current status
 show_status() {
     log_info "=== Koku CI Management Status ==="
@@ -74,10 +128,19 @@ show_status() {
     last_schedule=$(kubectl get cronjob "$CRONJOB_NAME" -n "$NAMESPACE" -o jsonpath='{.status.lastScheduleTime}' 2>/dev/null || echo "Never")
     log_info "Last execution: $last_schedule"
     
+    # Last successful execution
+    local last_success
+    last_success=$(kubectl get cronjob "$CRONJOB_NAME" -n "$NAMESPACE" -o jsonpath='{.status.lastSuccessfulTime}' 2>/dev/null || echo "Never")
+    log_info "Last successful: $last_success"
+    
     # Active jobs
     local active_jobs
     active_jobs=$(kubectl get cronjob "$CRONJOB_NAME" -n "$NAMESPACE" -o jsonpath='{.status.active}' 2>/dev/null || echo "0")
     log_info "Active jobs: $active_jobs"
+    
+    echo
+    # Check health
+    check_cronjob_health
     
     echo
     log_info "=== Recent Jobs ==="
@@ -243,6 +306,7 @@ USAGE:
 
 COMMANDS:
     login               Login to Konflux cluster and switch to correct project
+    health              Check CronJob health and detect failed executions
     status              Show current CronJob status, recent jobs and pipelines
     trigger             Trigger a manual scheduled test job
     jobs [count]        Show recent jobs (default: 10)
@@ -255,6 +319,7 @@ COMMANDS:
 
 EXAMPLES:
     $0 login                     # Login to Konflux cluster
+    $0 health                    # Check if CronJob is healthy
     $0 status                    # Show current status
     $0 trigger                   # Trigger manual build
     $0 jobs 5                    # Show last 5 jobs
@@ -280,6 +345,10 @@ main() {
     case "${1:-help}" in
         "login")
             login_to_konflux
+            ;;
+        "health")
+            check_prerequisites
+            check_cronjob_health
             ;;
         "status")
             check_prerequisites
