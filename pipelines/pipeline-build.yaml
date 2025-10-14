@@ -57,6 +57,10 @@ spec:
     default: docker
     type: string
     description: The format for the resulting image's mediaType. Valid values are oci or docker.
+  - name: APP_NAME
+    type: string
+    description: Application name for notifications
+    default: ""
   results:
   - name: IMAGE_URL
     description: ""
