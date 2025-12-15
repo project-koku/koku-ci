@@ -2,7 +2,7 @@
 # Makefile to simplify Koku CI management operations
 # Repository: koku-ci
 
-.PHONY: help login health status suspend resume trigger jobs pipelines logs watch pods cleanup diagnose
+.PHONY: help login health status suspend resume trigger jobs pipelines logs watch pods cleanup
 
 # Default target
 help:

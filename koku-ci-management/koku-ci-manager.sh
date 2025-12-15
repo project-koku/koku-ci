@@ -307,7 +307,7 @@ suspend_cronjob() {
     log_info "Suspending CronJob '$CRONJOB_NAME'..."
     
     if kubectl patch cronjob "$CRONJOB_NAME" -n "$NAMESPACE" \
-        --type='json' -p='[{"op": "replace", "path": "/spec/suspend", "value": true}]'; then
+        --type='merge' -p='{"spec":{"suspend":true}}'; then
         log_success "CronJob '$CRONJOB_NAME' has been SUSPENDED"
         echo
         log_warning "⚠️  IMPORTANT: Scheduled jobs will NOT run until you resume the CronJob"
@@ -332,7 +332,7 @@ resume_cronjob() {
     log_info "Resuming CronJob '$CRONJOB_NAME'..."
     
     if kubectl patch cronjob "$CRONJOB_NAME" -n "$NAMESPACE" \
-        --type='json' -p='[{"op": "replace", "path": "/spec/suspend", "value": false}]'; then
+        --type='merge' -p='{"spec":{"suspend":false}}'; then
         log_success "CronJob '$CRONJOB_NAME' has been RESUMED"
         echo
         log_info "✅ Scheduled jobs will now run according to the schedule"
