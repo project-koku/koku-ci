@@ -2,7 +2,7 @@
 # Makefile to simplify Koku CI management operations
 # Repository: koku-ci
 
-.PHONY: help login health status trigger jobs pipelines logs watch pods cleanup
+.PHONY: help login health status suspend resume trigger jobs pipelines logs watch pods cleanup
 
 # Default target
 help:
@@ -13,6 +13,8 @@ help:
 	@echo "  login      - Login to Konflux cluster and switch to correct project"
 	@echo "  health     - Check CronJob health and detect failed executions"
 	@echo "  status     - Show current CronJob status, recent jobs and pipelines"
+	@echo "  suspend    - Suspend scheduled jobs (e.g., for holidays)"
+	@echo "  resume     - Resume scheduled jobs"
 	@echo "  trigger    - Trigger a manual scheduled test job"
 	@echo "  jobs       - Show recent jobs (last 10)"
 	@echo "  pipelines  - Show recent PipelineRuns (last 10)"
@@ -25,6 +27,8 @@ help:
 	@echo "  make login"
 	@echo "  make health"
 	@echo "  make status"
+	@echo "  make suspend    # Suspend before holidays"
+	@echo "  make resume     # Resume after holidays"
 	@echo "  make trigger"
 	@echo "  make pipelines"
 	@echo "  make logs"
@@ -43,6 +47,14 @@ health:
 # Show current status
 status:
 	@./koku-ci-manager.sh status
+
+# Suspend scheduled jobs (disable CronJob)
+suspend:
+	@./koku-ci-manager.sh suspend
+
+# Resume scheduled jobs (enable CronJob)
+resume:
+	@./koku-ci-manager.sh resume
 
 # Trigger manual scheduled test job
 trigger:

@@ -118,6 +118,16 @@ show_status() {
     log_info "=== Koku CI Management Status ==="
     echo
     
+    # Check if suspended
+    if is_cronjob_suspended; then
+        log_warning "⚠️  STATUS: SUSPENDED - Scheduled jobs will NOT run"
+        log_info "To resume: make resume (or ./koku-ci-manager.sh resume)"
+        echo
+    else
+        log_success "STATUS: ACTIVE - Scheduled jobs will run normally"
+        echo
+    fi
+    
     # CronJob schedule
     local schedule
     schedule=$(kubectl get cronjob "$CRONJOB_NAME" -n "$NAMESPACE" -o jsonpath='{.spec.schedule}' 2>/dev/null || echo "Not found")
@@ -277,6 +287,62 @@ cleanup_jobs() {
     log_success "Cleanup completed"
 }
 
+# Check if CronJob is suspended
+is_cronjob_suspended() {
+    local suspended
+    suspended=$(kubectl get cronjob "$CRONJOB_NAME" -n "$NAMESPACE" -o jsonpath='{.spec.suspend}' 2>/dev/null || echo "false")
+    [[ "$suspended" == "true" ]]
+}
+
+# Suspend the CronJob (disable scheduled executions)
+suspend_cronjob() {
+    log_info "Checking current CronJob state..."
+    
+    if is_cronjob_suspended; then
+        log_warning "CronJob '$CRONJOB_NAME' is already suspended"
+        log_info "No action needed. Use 'resume' to re-enable scheduled executions."
+        return 0
+    fi
+    
+    log_info "Suspending CronJob '$CRONJOB_NAME'..."
+    
+    if kubectl patch cronjob "$CRONJOB_NAME" -n "$NAMESPACE" \
+        --type='merge' -p='{"spec":{"suspend":true}}'; then
+        log_success "CronJob '$CRONJOB_NAME' has been SUSPENDED"
+        echo
+        log_warning "⚠️  IMPORTANT: Scheduled jobs will NOT run until you resume the CronJob"
+        log_info "To verify: make status (or ./koku-ci-manager.sh status)"
+        log_info "To resume: make resume (or ./koku-ci-manager.sh resume)"
+    else
+        log_error "Failed to suspend CronJob"
+        return 1
+    fi
+}
+
+# Resume the CronJob (enable scheduled executions)
+resume_cronjob() {
+    log_info "Checking current CronJob state..."
+    
+    if ! is_cronjob_suspended; then
+        log_warning "CronJob '$CRONJOB_NAME' is already active (not suspended)"
+        log_info "No action needed. Scheduled jobs will run according to the schedule."
+        return 0
+    fi
+    
+    log_info "Resuming CronJob '$CRONJOB_NAME'..."
+    
+    if kubectl patch cronjob "$CRONJOB_NAME" -n "$NAMESPACE" \
+        --type='merge' -p='{"spec":{"suspend":false}}'; then
+        log_success "CronJob '$CRONJOB_NAME' has been RESUMED"
+        echo
+        log_info "✅ Scheduled jobs will now run according to the schedule"
+        log_info "To verify: make status (or ./koku-ci-manager.sh status)"
+    else
+        log_error "Failed to resume CronJob"
+        return 1
+    fi
+}
+
 # Login to Konflux cluster
 login_to_konflux() {
     log_info "Starting Konflux login process..."
@@ -308,6 +374,8 @@ COMMANDS:
     login               Login to Konflux cluster and switch to correct project
     health              Check CronJob health and detect failed executions
     status              Show current CronJob status, recent jobs and pipelines
+    suspend             Suspend the CronJob (disable scheduled executions)
+    resume              Resume the CronJob (enable scheduled executions)
     trigger             Trigger a manual scheduled test job
     jobs [count]        Show recent jobs (default: 10)
     pipelines [count]   Show recent PipelineRuns (default: 10)
@@ -321,6 +389,8 @@ EXAMPLES:
     $0 login                     # Login to Konflux cluster
     $0 health                    # Check if CronJob is healthy
     $0 status                    # Show current status
+    $0 suspend                   # Suspend scheduled jobs (e.g., for holidays)
+    $0 resume                    # Resume scheduled jobs
     $0 trigger                   # Trigger manual build
     $0 jobs 5                    # Show last 5 jobs
     $0 pipelines 5               # Show last 5 PipelineRuns
@@ -353,6 +423,14 @@ main() {
         "status")
             check_prerequisites
             show_status
+            ;;
+        "suspend")
+            check_prerequisites
+            suspend_cronjob
+            ;;
+        "resume")
+            check_prerequisites
+            resume_cronjob
             ;;
         "trigger")
             check_prerequisites
