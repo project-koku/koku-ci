@@ -55,8 +55,8 @@ spec:
     description: The format for the resulting image's mediaType. Valid values are oci or docker.
   - name: APP_NAME
     type: string
-    description: Application name for notifications
-    default: ""
+    description: Application name for notifications (used in Slack link; fallback when empty)
+    default: "koku"
   - name: enable-cache-proxy
     default: 'false'
     description: Enable cache proxy configuration
