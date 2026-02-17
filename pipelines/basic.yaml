@@ -42,7 +42,8 @@ spec:
 
     - name: APP_NAME
       type: string
-      description: name of app-sre "application" folder this component lives in
+      description: name of app-sre "application" folder this component lives in (used in Slack link; fallback when empty)
+      default: "koku"
 
     - name: COMPONENTS
       type: string
