@@ -188,12 +188,21 @@ main() {
     
     echo
     show_status
-    
+
     log_success "Ready to use Konflux cluster!"
     log_info "You can now run Koku CI management commands:"
     log_info "  make status"
     log_info "  make trigger"
     log_info "  make logs"
+    echo
+    log_info "=== Important: use Konflux in this terminal ==="
+    log_info "The login ran in a subprocess. Your current terminal still uses the default"
+    log_info "kubeconfig (e.g. production). To point oc/kubectl to Konflux in THIS shell, run:"
+    echo
+    printf '  export KUBECONFIG="%s/konflux-cost-mgmt-dev.yaml"\n' "$(cd "$SCRIPT_DIR" && pwd)"
+    echo
+    log_info "Or from koku-ci-management/:  eval \$(make env)"
+    echo
 }
 
 # Run main function with all arguments

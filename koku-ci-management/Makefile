@@ -2,7 +2,7 @@
 # Makefile to simplify Koku CI management operations
 # Repository: koku-ci
 
-.PHONY: help login health status suspend resume trigger jobs pipelines logs watch pods cleanup
+.PHONY: help login env health status suspend resume trigger jobs pipelines logs watch pods cleanup
 
 # Default target
 help:
@@ -11,6 +11,7 @@ help:
 	@echo ""
 	@echo "Available targets:"
 	@echo "  login      - Login to Konflux cluster and switch to correct project"
+	@echo "  env        - Print export KUBECONFIG for current shell (use: eval \$(make env))"
 	@echo "  health     - Check CronJob health and detect failed executions"
 	@echo "  status     - Show current CronJob status, recent jobs and pipelines"
 	@echo "  suspend    - Suspend scheduled jobs (e.g., for holidays)"
@@ -39,6 +40,11 @@ help:
 # Login to Konflux cluster
 login:
 	@./koku-ci-manager.sh login
+
+# Print KUBECONFIG export for current shell. After 'make login', run: eval $(make env)
+# so oc/kubectl in this terminal use Konflux instead of the default kubeconfig.
+env:
+	@echo 'export KUBECONFIG="$(CURDIR)/konflux-cost-mgmt-dev.yaml"'
 
 # Check CronJob health
 health:
