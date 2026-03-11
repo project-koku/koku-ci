@@ -179,6 +179,11 @@ spec:
             fieldRef:
               fieldPath: metadata.labels['pac.test.appstudio.openshift.io/pull-request']
 
+        - name: EVENT_TYPE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['pac.test.appstudio.openshift.io/event-type']
+
         - name: CHECK_RUN_ID
           valueFrom:
             fieldRef:
