@@ -4,38 +4,12 @@
 
 .PHONY: help login env health status suspend resume trigger jobs pipelines logs watch pods cleanup
 
+# Job selector: standard | onprem | all (default: standard for mutating ops, all for read ops)
+JOB ?= standard
+
 # Default target
 help:
-	@echo "Koku CI Management"
-	@echo "============================="
-	@echo ""
-	@echo "Available targets:"
-	@echo "  login      - Login to Konflux cluster and switch to correct project"
-	@echo "  env        - Print export KUBECONFIG for current shell (use: eval \$(make env))"
-	@echo "  health     - Check CronJob health and detect failed executions"
-	@echo "  status     - Show current CronJob status, recent jobs and pipelines"
-	@echo "  suspend    - Suspend scheduled jobs (e.g., for holidays)"
-	@echo "  resume     - Resume scheduled jobs"
-	@echo "  trigger    - Trigger a manual scheduled test job"
-	@echo "  jobs       - Show recent jobs (last 10)"
-	@echo "  pipelines  - Show recent PipelineRuns (last 10)"
-	@echo "  logs       - Show logs for the most recent job"
-	@echo "  watch      - Watch jobs in real-time"
-	@echo "  pods       - Show pods for the most recent job"
-	@echo "  cleanup    - Clean up old jobs (older than 7 days)"
-	@echo ""
-	@echo "Examples:"
-	@echo "  make login"
-	@echo "  make health"
-	@echo "  make status"
-	@echo "  make suspend    # Suspend before holidays"
-	@echo "  make resume     # Resume after holidays"
-	@echo "  make trigger"
-	@echo "  make pipelines"
-	@echo "  make logs"
-	@echo ""
-	@echo "Repository: koku-ci"
-	@echo "Team: Cost Management"
+	@./koku-ci-manager.sh help
 
 # Login to Konflux cluster
 login:
@@ -46,25 +20,35 @@ login:
 env:
 	@echo 'export KUBECONFIG="$(CURDIR)/konflux-cost-mgmt-dev.yaml"'
 
-# Check CronJob health
+# Check CronJob health (both jobs by default)
+# Usage: make health              # check both
+#        make health JOB=onprem  # check onprem only
 health:
-	@./koku-ci-manager.sh health
+	@./koku-ci-manager.sh health $(JOB)
 
-# Show current status
+# Show current status for all scheduled jobs
 status:
 	@./koku-ci-manager.sh status
 
-# Suspend scheduled jobs (disable CronJob)
+# Suspend scheduled job(s)
+# Usage: make suspend             # suspend standard job
+#        make suspend JOB=onprem # suspend onprem job
+#        make suspend JOB=all    # suspend both (e.g. for holidays)
 suspend:
-	@./koku-ci-manager.sh suspend
+	@./koku-ci-manager.sh suspend $(JOB)
 
-# Resume scheduled jobs (enable CronJob)
+# Resume scheduled job(s)
+# Usage: make resume             # resume standard job
+#        make resume JOB=onprem # resume onprem job
+#        make resume JOB=all    # resume both
 resume:
-	@./koku-ci-manager.sh resume
+	@./koku-ci-manager.sh resume $(JOB)
 
-# Trigger manual scheduled test job
+# Trigger a manual run
+# Usage: make trigger             # trigger standard job
+#        make trigger JOB=onprem # trigger onprem job
 trigger:
-	@./koku-ci-manager.sh trigger
+	@./koku-ci-manager.sh trigger $(JOB)
 
 # Show recent jobs
 jobs:
