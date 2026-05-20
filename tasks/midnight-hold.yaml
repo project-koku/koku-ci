@@ -1,0 +1,171 @@
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: midnight-hold
+
+spec:
+  params:
+    - name: IQE_CJI_TIMEOUT
+      type: string
+      description: "Fallback duration estimate when the PR label is unrecognized. Parsed and capped at the largest known label (~233 min). Prefer explicit label-based estimates over this value."
+      default: "4h"
+
+    - name: IS_SCHEDULED_TEST_JOB
+      type: string
+      description: "If 'true', skip the hold entirely (scheduled jobs may intentionally span midnight)"
+      default: "false"
+
+  steps:
+    - name: evaluate-midnight-hold
+      image: curlimages/curl:latest
+      env:
+        - name: IS_SCHEDULED_TEST_JOB
+          value: $(params.IS_SCHEDULED_TEST_JOB)
+
+        - name: IQE_CJI_TIMEOUT
+          value: $(params.IQE_CJI_TIMEOUT)
+
+        - name: PR_NUMBER
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['pac.test.appstudio.openshift.io/pull-request']
+
+      script: |
+        #!/bin/sh
+        set -e
+
+        # ---------------------------------------------------------------------------
+        # Midnight Hold — interim defensive mechanism (see COST-7490)
+        #
+        # Delays the pipeline if the estimated test duration would overlap the UTC
+        # midnight boundary, causing date-sensitive IQE tests to fail.
+        # ---------------------------------------------------------------------------
+
+        # Skip entirely for scheduled jobs — they may intentionally span midnight.
+        if [ "${IS_SCHEDULED_TEST_JOB}" = "true" ]; then
+          echo "[midnight-hold] Scheduled job detected. Skipping hold."
+          exit 0
+        fi
+
+        # Skip if no PR number (push to main or manual run without PR context).
+        if [ -z "${PR_NUMBER}" ]; then
+          echo "[midnight-hold] No PR number found. Skipping hold."
+          exit 0
+        fi
+
+        # ── Fetch PR labels from GitHub API ────────────────────────────────────────
+        echo "[midnight-hold] Fetching labels for PR #${PR_NUMBER}..."
+
+        GH_URL="https://api.github.com/repos/project-koku/koku/issues/${PR_NUMBER}/labels"
+        if [ -n "${GITHUB_TOKEN:-}" ]; then
+          HTTP_CODE=$(curl -sS -o /tmp/gh_labels.json -w "%{http_code}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            "${GH_URL}")
+        else
+          HTTP_CODE=$(curl -sS -o /tmp/gh_labels.json -w "%{http_code}" \
+            -H "Accept: application/vnd.github+json" \
+            "${GH_URL}")
+        fi
+
+        if [ "${HTTP_CODE}" != "200" ]; then
+          echo "[midnight-hold] WARNING: Could not fetch PR labels (HTTP ${HTTP_CODE}). Skipping hold."
+          exit 0
+        fi
+
+        LABELS=$(grep -o '"name": *"[^"]*"' /tmp/gh_labels.json | cut -d'"' -f4 | tr '\n' ' ')
+        echo "[midnight-hold] PR labels: ${LABELS}"
+
+        # ── Skip labels that will not run IQE tests ─────────────────────────────────
+        for skip_label in "ok-to-skip-smokes" "run-jenkins-tests"; do
+          if echo "${LABELS}" | grep -qw "${skip_label}"; then
+            echo "[midnight-hold] Label '${skip_label}' detected — no IQE tests will run. Skipping hold."
+            exit 0
+          fi
+        done
+
+        # ── Estimate job duration from PR label (empirical data — COST-7490) ───────
+        # Values include a ~20% buffer over observed averages.
+        # Fallback: parse IQE_CJI_TIMEOUT for unrecognised labels, capped at the
+        # largest known duration (ocp-smoke-tests ~233 min = 13980s) to avoid
+        # blocking pipelines excessively on unexpected labels.
+        ESTIMATED_DURATION_SECONDS=0
+
+        if echo "${LABELS}" | grep -qw "hot-fix-smoke-tests"; then
+          ESTIMATED_DURATION_SECONDS=1680    # ~28 min  (avg 23 min + 20%)
+        elif echo "${LABELS}" | grep -qw "azure-smoke-tests"; then
+          ESTIMATED_DURATION_SECONDS=4800    # ~80 min  (avg 66 min + 20%)
+        elif echo "${LABELS}" | grep -qw "gcp-smoke-tests"; then
+          ESTIMATED_DURATION_SECONDS=4800    # ~80 min  (same suite as azure)
+        elif echo "${LABELS}" | grep -qw "cost-model-smoke-tests"; then
+          ESTIMATED_DURATION_SECONDS=4800    # ~80 min  (similar scope to azure)
+        elif echo "${LABELS}" | grep -qw "ocp-on-prem-smoke-tests"; then
+          ESTIMATED_DURATION_SECONDS=7440    # ~124 min (avg 103 min + 20%)
+        elif echo "${LABELS}" | grep -qw "smoke-tests"; then
+          ESTIMATED_DURATION_SECONDS=10200   # ~170 min (avg 141 min + 20%)
+        elif echo "${LABELS}" | grep -qw "ocp-smoke-tests"; then
+          ESTIMATED_DURATION_SECONDS=13980   # ~233 min (avg 194 min + 20%)
+        elif echo "${LABELS}" | grep -qw "full-run-smoke-tests"; then
+          ESTIMATED_DURATION_SECONDS=17280   # ~288 min (avg 240 min + 20%)
+        else
+          # Unrecognised label: parse IQE_CJI_TIMEOUT as fallback.
+          # Cap at 13980s (largest known label) to avoid overly aggressive holds.
+          echo "[midnight-hold] No known smoke label found. Parsing IQE_CJI_TIMEOUT='${IQE_CJI_TIMEOUT}' as fallback..."
+          RAW="${IQE_CJI_TIMEOUT}"
+          HOURS=0
+          MINUTES=0
+          # Parse formats: 8h, 2h30m, 90m, 3600s
+          if echo "${RAW}" | grep -qE '^[0-9]+h[0-9]+m$'; then
+            HOURS=$(echo "${RAW}" | sed 's/h.*//')
+            MINUTES=$(echo "${RAW}" | sed 's/.*h//;s/m//')
+          elif echo "${RAW}" | grep -qE '^[0-9]+h$'; then
+            HOURS=$(echo "${RAW}" | sed 's/h//')
+          elif echo "${RAW}" | grep -qE '^[0-9]+m$'; then
+            MINUTES=$(echo "${RAW}" | sed 's/m//')
+          elif echo "${RAW}" | grep -qE '^[0-9]+s$'; then
+            ESTIMATED_DURATION_SECONDS=$(echo "${RAW}" | sed 's/s//')
+          fi
+          if [ "${ESTIMATED_DURATION_SECONDS}" -eq 0 ]; then
+            ESTIMATED_DURATION_SECONDS=$(( HOURS * 3600 + MINUTES * 60 ))
+          fi
+          # Cap at the largest known duration
+          if [ "${ESTIMATED_DURATION_SECONDS}" -gt 13980 ]; then
+            ESTIMATED_DURATION_SECONDS=13980
+          fi
+        fi
+
+        ESTIMATED_DURATION_MINUTES=$(( ESTIMATED_DURATION_SECONDS / 60 ))
+        echo "[midnight-hold] Estimated job duration: ${ESTIMATED_DURATION_MINUTES} min (${ESTIMATED_DURATION_SECONDS}s)"
+
+        # ── Calculate time remaining until UTC midnight ─────────────────────────────
+        CURRENT_HOUR=$(date -u +%H)
+        CURRENT_MIN=$(date -u +%M)
+        CURRENT_SEC=$(date -u +%S)
+        CURRENT_UTC_SECONDS=$(( CURRENT_HOUR * 3600 + CURRENT_MIN * 60 + CURRENT_SEC ))
+        SECONDS_UNTIL_MIDNIGHT=$(( 86400 - CURRENT_UTC_SECONDS ))
+        MINUTES_UNTIL_MIDNIGHT=$(( SECONDS_UNTIL_MIDNIGHT / 60 ))
+
+        echo "[midnight-hold] Current UTC time: $(date -u +%H:%M:%S)"
+        echo "[midnight-hold] Time until midnight UTC: ${MINUTES_UNTIL_MIDNIGHT} min (${SECONDS_UNTIL_MIDNIGHT}s)"
+
+        # ── Decision ────────────────────────────────────────────────────────────────
+        if [ "${ESTIMATED_DURATION_SECONDS}" -le "${SECONDS_UNTIL_MIDNIGHT}" ]; then
+          echo "[midnight-hold] No midnight conflict predicted. Pipeline proceeds immediately."
+          exit 0
+        fi
+
+        # Hold: sleep until midnight + 5 min buffer
+        HOLD_SECONDS=$(( SECONDS_UNTIL_MIDNIGHT + 300 ))
+        HOLD_MINUTES=$(( HOLD_SECONDS / 60 ))
+        RESUME_TIME=$(date -u -d "@$(( $(date -u +%s) + HOLD_SECONDS ))" +%H:%M:%S 2>/dev/null \
+                      || date -u -r $(( $(date -u +%s) + HOLD_SECONDS )) +%H:%M:%S)
+
+        echo "[midnight-hold] *** HOLD ACTIVATED ***"
+        echo "[midnight-hold] Estimated end time would cross UTC midnight."
+        echo "[midnight-hold] Sleeping ${HOLD_MINUTES} min until 00:05 UTC (${HOLD_SECONDS}s)."
+        echo "[midnight-hold] Pipeline will resume at approximately ${RESUME_TIME} UTC."
+
+        sleep "${HOLD_SECONDS}"
+
+        echo "[midnight-hold] Hold complete. Resuming pipeline at $(date -u +%H:%M:%S) UTC."
