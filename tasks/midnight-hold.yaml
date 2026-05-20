@@ -139,11 +139,11 @@ spec:
         echo "[midnight-hold] Estimated job duration: ${ESTIMATED_DURATION_MINUTES} min (${ESTIMATED_DURATION_SECONDS}s)"
 
         # ── Calculate time remaining until UTC midnight ─────────────────────────────
-        CURRENT_HOUR=$(date -u +%H)
-        CURRENT_MIN=$(date -u +%M)
-        CURRENT_SEC=$(date -u +%S)
-        CURRENT_UTC_SECONDS=$(( CURRENT_HOUR * 3600 + CURRENT_MIN * 60 + CURRENT_SEC ))
-        SECONDS_UNTIL_MIDNIGHT=$(( 86400 - CURRENT_UTC_SECONDS ))
+        # Single epoch call avoids a race condition that could occur if three
+        # separate date calls spanning a minute/hour boundary produced an
+        # inconsistent CURRENT_UTC_SECONDS value.
+        SECONDS_SINCE_MIDNIGHT=$(( $(date -u +%s) % 86400 ))
+        SECONDS_UNTIL_MIDNIGHT=$(( 86400 - SECONDS_SINCE_MIDNIGHT ))
         MINUTES_UNTIL_MIDNIGHT=$(( SECONDS_UNTIL_MIDNIGHT / 60 ))
 
         echo "[midnight-hold] Current UTC time: $(date -u +%H:%M:%S)"
