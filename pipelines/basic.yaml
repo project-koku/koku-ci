@@ -177,6 +177,29 @@ spec:
           - name: pathInRepo
             value: tasks/init-pipeline-context.yaml
 
+    - name: midnight-hold
+      params:
+        - name: IQE_CJI_TIMEOUT
+          value: "$(params.IQE_CJI_TIMEOUT)"
+
+        - name: IS_SCHEDULED_TEST_JOB
+          value: "$(params.IS_SCHEDULED_TEST_JOB)"
+
+      runAfter:
+        - init-pipeline-context
+
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: "$(params.URL)"
+
+          - name: revision
+            value: "$(params.REVISION)"
+
+          - name: pathInRepo
+            value: tasks/midnight-hold.yaml
+
     - name: reserve-namespace
       params:
         - name: NS_REQUESTER
@@ -199,7 +222,7 @@ spec:
           - name: pathInRepo
             value: tasks/reserve-namespace.yaml
       runAfter:
-        - init-pipeline-context
+        - midnight-hold
 
     - name: deploy-application
       params:
