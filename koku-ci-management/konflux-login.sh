@@ -1,41 +1,27 @@
 #!/usr/bin/env bash
 
-# Konflux Login Helper
-# Script to simplify login to Konflux cluster
-# Repository: koku-ci
+# Konflux / OpenShift login helper for Koku CI Management.
+# Uses direct cluster access (stone-prd-rh01), not the Konflux OIDC exec kubeconfig.
 
 set -euo pipefail
 
-# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 DEFAULT_PROJECT="cost-mgmt-dev-tenant"
 KONFLUX_KUBECONFIG="$SCRIPT_DIR/konflux-cost-mgmt-dev.yaml"
+KONFLUX_SERVER="https://api.stone-prd-rh01.pg1f.p1.openshiftapps.com:6443"
+AUTH_CHECK_TIMEOUT="${AUTH_CHECK_TIMEOUT:-10}"
 
-# Helper functions
-log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
+log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Show help
 show_help() {
     cat << EOF
 Konflux Login Helper
@@ -44,33 +30,28 @@ USAGE:
     $0 [OPTIONS]
 
 OPTIONS:
-    -p, --project PROJECT    Project/namespace to switch to (default: cost-mgmt-dev-tenant)
-    -h, --help              Show this help message
+    -p, --project PROJECT    Namespace to switch to (default: cost-mgmt-dev-tenant)
+    -h, --help               Show this help message
 
 EXAMPLES:
-    $0                                    # Login to Konflux, switch to cost-mgmt-dev-tenant
-    $0 -p koku-dev-tenant                 # Login to Konflux, switch to koku-dev-tenant
+    $0
+    $0 -p cost-mgmt-dev-tenant
 
-DEFAULT BEHAVIOR:
-    - Project: $DEFAULT_PROJECT
-    - Kubeconfig: $KONFLUX_KUBECONFIG
+After login, in the same terminal:
+    eval \$(make env)
 
 REPOSITORY: koku-ci
-TEAM: Cost Management
-
 EOF
 }
 
-# Parse command line arguments
 parse_args() {
     local project="$DEFAULT_PROJECT"
-    
-    # Handle help first
+
     if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
         show_help
         exit 0
     fi
-    
+
     while [[ $# -gt 0 ]]; do
         case $1 in
             -p|--project)
@@ -79,17 +60,15 @@ parse_args() {
                 ;;
             *)
                 log_error "Unknown option: $1"
-                echo
                 show_help
                 exit 1
                 ;;
         esac
     done
-    
+
     echo "$project"
 }
 
-# Check if oc is available
 check_oc() {
     if ! command -v oc &> /dev/null; then
         log_error "oc command not found. Please install OpenShift CLI."
@@ -97,60 +76,97 @@ check_oc() {
     fi
 }
 
-# Set KUBECONFIG for Konflux
-set_kubeconfig() {
-    if [[ ! -f "$KONFLUX_KUBECONFIG" ]]; then
-        log_error "Kubeconfig file not found: $KONFLUX_KUBECONFIG"
-        log_info "The kubeconfig file should be in the same directory as this script."
-        exit 1
+# Run a command with a timeout (macOS-compatible: perl if GNU timeout is missing).
+run_with_timeout() {
+    local seconds="$1"
+    shift
+
+    if command -v timeout &> /dev/null; then
+        timeout "$seconds" "$@"
+        return $?
     fi
-    
+
+    if command -v gtimeout &> /dev/null; then
+        gtimeout "$seconds" "$@"
+        return $?
+    fi
+
+    perl -e 'alarm shift; exec @ARGV' "$seconds" "$@"
+}
+
+uses_oidc_exec_kubeconfig() {
+    [[ -f "$KONFLUX_KUBECONFIG" ]] && grep -q 'oidc-login' "$KONFLUX_KUBECONFIG" 2>/dev/null
+}
+
+ensure_kubeconfig() {
+    if uses_oidc_exec_kubeconfig; then
+        log_warning "Detected legacy Konflux OIDC kubeconfig (kubectl oidc-login can hang)."
+        log_info "Resetting to direct cluster kubeconfig template..."
+        cp "$KONFLUX_KUBECONFIG" "${KONFLUX_KUBECONFIG}.bak.$(date +%Y%m%d%H%M%S)" 2>/dev/null || true
+    fi
+
+    if [[ ! -f "$KONFLUX_KUBECONFIG" ]] || uses_oidc_exec_kubeconfig; then
+        cat > "$KONFLUX_KUBECONFIG" << 'EOF'
+apiVersion: v1
+kind: Config
+clusters:
+  - name: stone-prd-rh01
+    cluster:
+      server: https://api.stone-prd-rh01.pg1f.p1.openshiftapps.com:6443
+contexts:
+  - name: cost-mgmt-dev-tenant
+    context:
+      cluster: stone-prd-rh01
+      namespace: cost-mgmt-dev-tenant
+      user: default
+current-context: cost-mgmt-dev-tenant
+users:
+  - name: default
+    user: {}
+EOF
+        log_success "Wrote kubeconfig template: $KONFLUX_KUBECONFIG"
+    fi
+
     export KUBECONFIG="$KONFLUX_KUBECONFIG"
     log_info "KUBECONFIG set to: $KUBECONFIG"
 }
 
-# Login to Konflux cluster
-login_to_konflux() {
-    log_info "Checking authentication status..."
-    
-    # Check if already authenticated
-    if oc whoami >/dev/null 2>&1; then
-        local current_user
-        current_user=$(oc whoami)
-        log_success "Already authenticated as: $current_user"
+auth_ok() {
+    run_with_timeout "$AUTH_CHECK_TIMEOUT" oc whoami >/dev/null 2>&1
+}
+
+login_to_cluster() {
+    log_info "Checking authentication status (timeout: ${AUTH_CHECK_TIMEOUT}s)..."
+
+    if auth_ok; then
+        log_success "Already authenticated as: $(oc whoami)"
+        return 0
+    fi
+
+    log_info "Not authenticated. Starting web login to: $KONFLUX_SERVER"
+    if oc login --web --server="$KONFLUX_SERVER"; then
+        log_success "Successfully logged in!"
     else
-        log_info "Not authenticated. Starting web login..."
-        
-        # Use oc login --web like the working oc-login function
-        local server_url="https://api.stone-prd-rh01.pg1f.p1.openshiftapps.com:6443"
-        log_info "Opening browser for authentication to: $server_url"
-        
-        if oc login --web --server="$server_url"; then
-            log_success "Successfully logged in!"
-        else
-            log_error "Login failed. Please try again."
-            exit 1
-        fi
+        log_error "Login failed. Try manually:"
+        log_info "  export KUBECONFIG=\"$KONFLUX_KUBECONFIG\""
+        log_info "  oc login --web --server=$KONFLUX_SERVER"
+        exit 1
     fi
 }
 
-# Switch to project
 switch_to_project() {
     local project="$1"
-    
+
     log_info "Switching to project: $project"
-    
-    if oc project "$project" > /dev/null 2>&1; then
+    if oc project "$project" >/dev/null 2>&1; then
         log_success "Switched to project: $project"
     else
         log_warning "Failed to switch to project: $project"
         log_info "Available projects:"
-        oc projects --short | head -10
-        log_info "You can manually switch with: oc project <project-name>"
+        oc projects --short 2>/dev/null | head -15 || true
     fi
 }
 
-# Show current status
 show_status() {
     log_info "=== Current Status ==="
     echo "User: $(oc whoami 2>/dev/null || echo 'Not logged in')"
@@ -159,51 +175,32 @@ show_status() {
     echo "KUBECONFIG: $KUBECONFIG"
 }
 
-# Main function
 main() {
-    # Handle help first
     if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
         show_help
         exit 0
     fi
-    
+
     check_oc
-    
-    # Parse arguments
     local project
     project=$(parse_args "$@")
-    
+
     log_info "=== Konflux Login Helper ==="
     log_info "Project: $project"
     echo
-    
-    # Set KUBECONFIG
-    set_kubeconfig
-    
-    # Login to cluster
-    login_to_konflux
-    
-    # Switch to project
+
+    ensure_kubeconfig
+    login_to_cluster
     switch_to_project "$project"
-    
+
     echo
     show_status
 
-    log_success "Ready to use Konflux cluster!"
-    log_info "You can now run Koku CI management commands:"
-    log_info "  make status"
-    log_info "  make trigger"
-    log_info "  make logs"
+    log_success "Ready to use the cluster!"
+    log_info "In this terminal, run:"
     echo
-    log_info "=== Important: use Konflux in this terminal ==="
-    log_info "The login ran in a subprocess. Your current terminal still uses the default"
-    log_info "kubeconfig (e.g. production). To point oc/kubectl to Konflux in THIS shell, run:"
-    echo
-    printf '  export KUBECONFIG="%s/konflux-cost-mgmt-dev.yaml"\n' "$(cd "$SCRIPT_DIR" && pwd)"
-    echo
-    log_info "Or from koku-ci-management/:  eval \$(make env)"
+    printf '  eval $(make env)\n'
     echo
 }
 
-# Run main function with all arguments
 main "$@"

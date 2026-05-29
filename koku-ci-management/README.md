@@ -14,9 +14,11 @@ This directory contains tools to manage Koku CI scheduled test jobs that run aut
 **No configuration needed!** Everything is pre-configured and ready to use.
 
 - **Namespace**: `cost-mgmt-dev-tenant`
-- **Kubeconfig**: `konflux-cost-mgmt-dev.yaml` (included in repository)
+- **Kubeconfig**: `konflux-cost-mgmt-dev.yaml` — direct access to `stone-prd-rh01` (not the Konflux OIDC proxy API)
 
-> **Note**: The `konflux-cost-mgmt-dev.yaml` file is tracked in git but ignored for local changes. This prevents accidentally committing sensitive tokens that are added during authentication. The file will be modified locally when you login, but these changes won't be staged for commit.
+> **Note**: `konflux-cost-mgmt-dev.yaml` is in `.gitignore` for local token changes. The repo ships a template without credentials. `make login` runs `oc login --web` and stores tokens in that file.
+>
+> **If `make login` or `make status` used to hang:** an older kubeconfig used `kubectl oidc-login` against Red Hat SSO and could block forever. `make login` now resets that template automatically.
 
 ## Login to Konflux
 
