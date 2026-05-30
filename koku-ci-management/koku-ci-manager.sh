@@ -10,6 +10,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 NAMESPACE="cost-mgmt-dev-tenant"
 KONFLUX_KUBECONFIG="$SCRIPT_DIR/konflux-cost-mgmt-dev.yaml"
+AUTH_CHECK_TIMEOUT="${AUTH_CHECK_TIMEOUT:-10}"
 
 # Job definitions: name -> "cronjob_name:scenario_name:description"
 declare -A JOB_CRONJOB
@@ -72,6 +73,24 @@ resolve_job() {
     esac
 }
 
+# Run a command with a timeout (macOS-compatible).
+run_with_timeout() {
+    local seconds="$1"
+    shift
+
+    if command -v timeout &> /dev/null; then
+        timeout "$seconds" "$@"
+        return $?
+    fi
+
+    if command -v gtimeout &> /dev/null; then
+        gtimeout "$seconds" "$@"
+        return $?
+    fi
+
+    perl -e 'alarm shift; exec @ARGV' "$seconds" "$@"
+}
+
 # Check if kubectl is available and user is logged in
 check_prerequisites() {
     if ! command -v kubectl &> /dev/null; then
@@ -79,12 +98,14 @@ check_prerequisites() {
         exit 1
     fi
 
-    if ! kubectl auth can-i get pods -n "$NAMESPACE" &> /dev/null; then
-        log_error "You don't have access to namespace $NAMESPACE or you're not logged in"
-        log_info "Please run one of the following:"
-        log_info "  ./konflux-login.sh                    # Login to Konflux with default project"
-        log_info "  ./konflux-login.sh -p $NAMESPACE      # Login to Konflux with specific project"
-        log_info "  oc login --web                        # Manual login"
+    if ! run_with_timeout "$AUTH_CHECK_TIMEOUT" kubectl auth can-i get pods -n "$NAMESPACE" &> /dev/null; then
+        log_error "You don't have access to namespace $NAMESPACE, you're not logged in, or auth timed out (${AUTH_CHECK_TIMEOUT}s)"
+        log_info "Legacy Konflux OIDC kubeconfig can hang — run: make login"
+        log_info "Then in the same terminal: eval \$(make env)"
+        log_info "Manual login:"
+        log_info "  export KUBECONFIG=\"$KONFLUX_KUBECONFIG\""
+        log_info "  oc login --web --server=https://api.stone-prd-rh01.pg1f.p1.openshiftapps.com:6443"
+        log_info "  oc project $NAMESPACE"
         exit 1
     fi
 }
