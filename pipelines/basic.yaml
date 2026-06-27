@@ -418,7 +418,7 @@ spec:
           - name: name
             value: slack-webhook-notification
           - name: bundle
-            value: quay.io/konflux-ci/tekton-catalog/task-slack-webhook-notification:0.1@sha256:d34a3789505f829493636a265eb04790695dba84bbb2bb716a7551a6911f2816
+            value: quay.io/konflux-ci/tekton-catalog/task-slack-webhook-notification:0.1@sha256:3350566fdd5838366bb0c480c14270cea87f1f3ddf5765964405c6111c02893f
           - name: kind
             value: task
         resolver: bundles
@@ -446,7 +446,7 @@ spec:
           - name: name
             value: slack-webhook-notification
           - name: bundle
-            value: quay.io/konflux-ci/tekton-catalog/task-slack-webhook-notification:0.1@sha256:d34a3789505f829493636a265eb04790695dba84bbb2bb716a7551a6911f2816
+            value: quay.io/konflux-ci/tekton-catalog/task-slack-webhook-notification:0.1@sha256:3350566fdd5838366bb0c480c14270cea87f1f3ddf5765964405c6111c02893f
           - name: kind
             value: task
         resolver: bundles
