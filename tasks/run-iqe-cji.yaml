@@ -109,7 +109,7 @@ spec:
   steps:
     - name: deploy-iqe-cji
       image: "$(params.BONFIRE_IMAGE)"
-      timeout: "8h"
+      timeout: "9h"
       env:
         - name: OC_LOGIN_TOKEN
           valueFrom:
