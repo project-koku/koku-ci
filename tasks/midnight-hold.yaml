@@ -118,12 +118,12 @@ spec:
           ESTIMATED_DURATION_SECONDS=4800    # ~80 min  (similar scope to azure)
         elif echo "${LABELS}" | grep -qw "ocp-on-prem-smoke-tests"; then
           ESTIMATED_DURATION_SECONDS=7800    # ~130 min (avg 103 min + 20%, rounded up)
-        elif echo "${LABELS}" | grep -qw "smoke-tests"; then
-          ESTIMATED_DURATION_SECONDS=10200   # ~170 min (avg 141 min + 20%)
-        elif echo "${LABELS}" | grep -qw "ocp-smoke-tests"; then
-          ESTIMATED_DURATION_SECONDS=14400   # ~240 min (avg 194 min + 20%, rounded up)
         elif echo "${LABELS}" | grep -qw "full-run-smoke-tests"; then
           ESTIMATED_DURATION_SECONDS=17400   # ~290 min (avg 240 min + 20%, rounded up)
+        elif echo "${LABELS}" | grep -qw "ocp-smoke-tests"; then
+          ESTIMATED_DURATION_SECONDS=14400   # ~240 min (avg 194 min + 20%, rounded up)
+        elif echo "${LABELS}" | grep -qw "smoke-tests"; then
+          ESTIMATED_DURATION_SECONDS=10200   # ~170 min (avg 141 min + 20%)
         else
           # Unrecognised label: parse IQE_CJI_TIMEOUT as fallback.
           # Cap at 14400s (largest known label) to avoid overly aggressive holds.
