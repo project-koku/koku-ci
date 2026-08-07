@@ -8,7 +8,7 @@ spec:
   params:
     - name: IQE_CJI_TIMEOUT
       type: string
-      description: "Fallback duration estimate when the PR label is unrecognized. Parsed and capped at the largest known label (~240 min). Prefer explicit label-based estimates over this value."
+      description: "Fallback duration estimate when the PR label is unrecognized. Parsed and capped at the largest known label (~290 min). Prefer explicit label-based estimates over this value."
       default: "4h"
 
     - name: IS_SCHEDULED_TEST_JOB
@@ -41,6 +41,20 @@ spec:
         # Delays the pipeline if the estimated test duration would overlap the UTC
         # midnight boundary, causing date-sensitive IQE tests to fail.
         # ---------------------------------------------------------------------------
+
+        hold_and_sleep() {
+          hold_seconds=$1
+          reason=$2
+          hold_minutes=$(( hold_seconds / 60 ))
+          resume_time=$(date -u -d "@$(( $(date -u +%s) + hold_seconds ))" +%H:%M:%S 2>/dev/null \
+                        || date -u -r $(( $(date -u +%s) + hold_seconds )) +%H:%M:%S)
+
+          echo "[midnight-hold] *** ${reason} ***"
+          echo "[midnight-hold] Sleeping ${hold_minutes} min until 01:00-01:15 UTC."
+          echo "[midnight-hold] Pipeline will resume at approximately ${resume_time} UTC."
+          sleep "${hold_seconds}"
+          echo "[midnight-hold] Hold complete. Resuming pipeline at $(date -u +%H:%M:%S) UTC."
+        }
 
         # Skip entirely for scheduled jobs — they may intentionally span midnight.
         if [ "${IS_SCHEDULED_TEST_JOB}" = "true" ]; then
@@ -88,7 +102,7 @@ spec:
         # ── Estimate job duration from PR label (empirical data — COST-7490) ───────
         # Values include a ~20% buffer over observed averages, rounded up for safety.
         # Fallback: parse IQE_CJI_TIMEOUT for unrecognised labels, capped at the
-        # largest known duration (ocp-smoke-tests ~240 min = 14400s) to avoid
+        # largest known duration (full-run-smoke-tests ~290 min = 17400s) to avoid
         # blocking pipelines excessively on unexpected labels.
         ESTIMATED_DURATION_SECONDS=0
 
@@ -112,7 +126,7 @@ spec:
           ESTIMATED_DURATION_SECONDS=17400   # ~290 min (avg 240 min + 20%, rounded up)
         else
           # Unrecognised label: parse IQE_CJI_TIMEOUT as fallback.
-          # Cap at 14400s (largest known label) to avoid overly aggressive holds.
+          # Cap at 17400s (largest known label) to avoid overly aggressive holds.
           echo "[midnight-hold] No known smoke label found. Parsing IQE_CJI_TIMEOUT='${IQE_CJI_TIMEOUT}' as fallback..."
           RAW="${IQE_CJI_TIMEOUT}"
           HOURS=0
@@ -132,42 +146,44 @@ spec:
             ESTIMATED_DURATION_SECONDS=$(( HOURS * 3600 + MINUTES * 60 ))
           fi
           # Cap at the largest known duration
-          if [ "${ESTIMATED_DURATION_SECONDS}" -gt 14400 ]; then
-            ESTIMATED_DURATION_SECONDS=14400
+          if [ "${ESTIMATED_DURATION_SECONDS}" -gt 17400 ]; then
+            ESTIMATED_DURATION_SECONDS=17400
           fi
         fi
 
         ESTIMATED_DURATION_MINUTES=$(( ESTIMATED_DURATION_SECONDS / 60 ))
         echo "[midnight-hold] Estimated job duration: ${ESTIMATED_DURATION_MINUTES} min (${ESTIMATED_DURATION_SECONDS}s)"
 
-        # ── Calculate time remaining until UTC midnight ─────────────────────────────
-        # Single epoch call avoids a race condition that could occur if three
-        # separate date calls spanning a minute/hour boundary produced an
-        # inconsistent CURRENT_UTC_SECONDS value.
+        # ── Determine position in the UTC day ──────────────────────────────────────
+        # Single epoch call avoids a race condition that could occur if
+        # separate date calls spanning a second boundary produced an
+        # inconsistent view of the current time.
         SECONDS_SINCE_MIDNIGHT=$(( $(date -u +%s) % 86400 ))
         SECONDS_UNTIL_MIDNIGHT=$(( 86400 - SECONDS_SINCE_MIDNIGHT ))
-        MINUTES_UNTIL_MIDNIGHT=$(( SECONDS_UNTIL_MIDNIGHT / 60 ))
 
-        echo "[midnight-hold] Current UTC time: $(date -u +%H:%M:%S)"
-        echo "[midnight-hold] Time until midnight UTC: ${MINUTES_UNTIL_MIDNIGHT} min (${SECONDS_UNTIL_MIDNIGHT}s)"
+        # Generate random offset once (shared by both early-morning and midnight-crossing holds)
+        RANDOM_OFFSET=$(( $(od -An -N2 -tu2 /dev/urandom | tr -d ' ') % 901 ))
+
+        # ── Early-morning hold: 00:00-01:00 UTC ─────────────────────────────────────
+        # If current time is already in the danger window, hold until it passes.
+        # Derived from SECONDS_SINCE_MIDNIGHT to avoid a separate date call.
+        if [ "${SECONDS_SINCE_MIDNIGHT}" -lt 3600 ]; then
+          HOLD_SECONDS=$(( 3600 - SECONDS_SINCE_MIDNIGHT + RANDOM_OFFSET ))
+          echo "[midnight-hold] Current time is in the 00:00-01:00 UTC danger window."
+          hold_and_sleep "${HOLD_SECONDS}" "EARLY-MORNING HOLD ACTIVATED"
+          exit 0
+        fi
 
         # ── Decision ────────────────────────────────────────────────────────────────
+        echo "[midnight-hold] Current UTC time: $(date -u +%H:%M:%S)"
+        echo "[midnight-hold] Time until midnight UTC: $(( SECONDS_UNTIL_MIDNIGHT / 60 )) min (${SECONDS_UNTIL_MIDNIGHT}s)"
+
         if [ "${ESTIMATED_DURATION_SECONDS}" -le "${SECONDS_UNTIL_MIDNIGHT}" ]; then
           echo "[midnight-hold] No midnight conflict predicted. Pipeline proceeds immediately."
           exit 0
         fi
 
-        # Hold: sleep until midnight + 5 min buffer
-        HOLD_SECONDS=$(( SECONDS_UNTIL_MIDNIGHT + 300 ))
-        HOLD_MINUTES=$(( HOLD_SECONDS / 60 ))
-        RESUME_TIME=$(date -u -d "@$(( $(date -u +%s) + HOLD_SECONDS ))" +%H:%M:%S 2>/dev/null \
-                      || date -u -r $(( $(date -u +%s) + HOLD_SECONDS )) +%H:%M:%S)
-
-        echo "[midnight-hold] *** HOLD ACTIVATED ***"
-        echo "[midnight-hold] Estimated end time would cross UTC midnight."
-        echo "[midnight-hold] Sleeping ${HOLD_MINUTES} min until 00:05 UTC (${HOLD_SECONDS}s)."
-        echo "[midnight-hold] Pipeline will resume at approximately ${RESUME_TIME} UTC."
-
-        sleep "${HOLD_SECONDS}"
-
-        echo "[midnight-hold] Hold complete. Resuming pipeline at $(date -u +%H:%M:%S) UTC."
+        # Hold: sleep until 1 AM UTC + random 0-15 min offset (prevents simultaneous job starts)
+        HOLD_SECONDS=$(( SECONDS_UNTIL_MIDNIGHT + 3600 + RANDOM_OFFSET ))
+        echo "[midnight-hold] Test run would span the UTC midnight boundary."
+        hold_and_sleep "${HOLD_SECONDS}" "MIDNIGHT HOLD ACTIVATED"
