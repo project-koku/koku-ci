@@ -162,7 +162,13 @@ spec:
         SECONDS_UNTIL_MIDNIGHT=$(( 86400 - SECONDS_SINCE_MIDNIGHT ))
 
         # Generate random offset once (shared by both early-morning and midnight-crossing holds)
-        RANDOM_OFFSET=$(( $(od -An -N2 -tu2 /dev/urandom | tr -d ' ') % 901 ))
+        # Fallback to 0 if /dev/urandom or od fails, making randomness optional but graceful
+        RANDOM_VALUE=$(od -An -N2 -tu2 /dev/urandom 2>/dev/null | tr -d ' ') || true
+        if [ -n "${RANDOM_VALUE}" ] && [ "${RANDOM_VALUE}" -gt 0 ] 2>/dev/null; then
+          RANDOM_OFFSET=$(( RANDOM_VALUE % 901 ))
+        else
+          RANDOM_OFFSET=0
+        fi
 
         # ── Early-morning hold: 00:00-01:00 UTC ─────────────────────────────────────
         # If current time is already in the danger window, hold until it passes.
