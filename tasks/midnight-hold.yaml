@@ -174,7 +174,8 @@ spec:
           exit 0
         fi
 
-        # ── Decision ────────────────────────────────────────────────────────────────
+        # ── Midnight-crossing hold ──────────────────────────────────────────────────
+        # Check if estimated job duration would cross the UTC midnight boundary.
         echo "[midnight-hold] Current UTC time: $(date -u +%H:%M:%S)"
         echo "[midnight-hold] Time until midnight UTC: $(( SECONDS_UNTIL_MIDNIGHT / 60 )) min (${SECONDS_UNTIL_MIDNIGHT}s)"
 
