@@ -8,7 +8,7 @@ spec:
   params:
     - name: IQE_CJI_TIMEOUT
       type: string
-      description: "Fallback duration estimate when the PR label is unrecognized. Parsed and capped at the largest known label (~240 min). Prefer explicit label-based estimates over this value."
+      description: "Fallback duration estimate when the PR label is unrecognized. Parsed and capped at the largest commonly used label (~240 min). Prefer explicit label-based estimates over this value."
       default: "4h"
 
     - name: IS_SCHEDULED_TEST_JOB
@@ -100,30 +100,27 @@ spec:
         done
 
         # ── Estimate job duration from PR label (empirical data — COST-7490) ───────
-        # Values include a ~20% buffer over observed averages, rounded up for safety.
-        # Fallback: parse IQE_CJI_TIMEOUT for unrecognised labels, capped at the
-        # largest known duration (ocp-smoke-tests ~240 min = 14400s) to avoid
-        # blocking pipelines excessively on unexpected labels.
+        # Fallback: parse IQE_CJI_TIMEOUT for unrecognised labels.
         ESTIMATED_DURATION_SECONDS=0
 
         if echo "${LABELS}" | grep -qw "hot-fix-smoke-tests"; then
-          ESTIMATED_DURATION_SECONDS=1800    # ~30 min  (avg 23 min + 20%, rounded up)
+          ESTIMATED_DURATION_SECONDS=1800    # ~30 min
         elif echo "${LABELS}" | grep -qw "aws-smoke-tests"; then
-          ESTIMATED_DURATION_SECONDS=4800    # ~80 min  (same suite scope as azure)
+          ESTIMATED_DURATION_SECONDS=7200    # ~2 h
         elif echo "${LABELS}" | grep -qw "azure-smoke-tests"; then
-          ESTIMATED_DURATION_SECONDS=4800    # ~80 min  (avg 66 min + 20%)
+          ESTIMATED_DURATION_SECONDS=7200    # ~2 h
         elif echo "${LABELS}" | grep -qw "gcp-smoke-tests"; then
-          ESTIMATED_DURATION_SECONDS=4800    # ~80 min  (same suite as azure)
+          ESTIMATED_DURATION_SECONDS=10800   # ~3 h
         elif echo "${LABELS}" | grep -qw "cost-model-smoke-tests"; then
-          ESTIMATED_DURATION_SECONDS=4800    # ~80 min  (similar scope to azure)
+          ESTIMATED_DURATION_SECONDS=10800   # ~3 h
         elif echo "${LABELS}" | grep -qw "ocp-on-prem-smoke-tests"; then
-          ESTIMATED_DURATION_SECONDS=7800    # ~130 min (avg 103 min + 20%, rounded up)
+          ESTIMATED_DURATION_SECONDS=4500    # ~75 min
         elif echo "${LABELS}" | grep -qw "full-run-smoke-tests"; then
-          ESTIMATED_DURATION_SECONDS=17400   # ~290 min (avg 240 min + 20%, rounded up)
+          ESTIMATED_DURATION_SECONDS=25200   # ~7 h
         elif echo "${LABELS}" | grep -qw "ocp-smoke-tests"; then
-          ESTIMATED_DURATION_SECONDS=14400   # ~240 min (avg 194 min + 20%, rounded up)
+          ESTIMATED_DURATION_SECONDS=14400   # ~4 h
         elif echo "${LABELS}" | grep -qw "smoke-tests"; then
-          ESTIMATED_DURATION_SECONDS=10200   # ~170 min (avg 141 min + 20%)
+          ESTIMATED_DURATION_SECONDS=10800   # ~3 h
         else
           # Unrecognised label: parse IQE_CJI_TIMEOUT as fallback.
           # Cap at 14400s (largest known label) to avoid overly aggressive holds.
