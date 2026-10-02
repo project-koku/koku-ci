@@ -75,7 +75,12 @@ Reserves a namespace in the ephemeral environment for testing.
 
 #### deploy-application ####
 
-Runs `bonfile deploy` to create the application for testing.
+Runs `bonfire deploy` to create the application for testing.
+
+Fetches PR labels from the GitHub API (via `deploy.py` in
+[koku-test-container]). Authenticated requests need the `github-api-token`
+secret (see below); without it the shared unauthenticated quota (60/h/IP)
+can return HTTP 403 from the ephemeral cluster.
 
 
 #### run-iqe-cji ####
@@ -86,6 +91,28 @@ Runs `bonfire deploy-iqe-cji` with filter and marker based on the labels applied
 #### teardown ####
 
 Uploads artifacts to S3 and release namespace.
+
+### GitHub API token (PR label lookups) ###
+
+Several tasks call the GitHub REST API to read PR labels
+(`init-pipeline-context`, `midnight-hold`, `deploy`, `run-iqe-cji`).
+
+Create a classic PAT with **no scopes** (public repos only need auth for the
+higher rate limit) and store it in the tenant namespace:
+
+```bash
+# After: cd koku-ci-management && make login && eval $(make env)
+oc create secret generic github-api-token \
+  --from-literal=token='ghp_...' \
+  -n cost-mgmt-dev-tenant
+```
+
+Tasks reference this secret with `optional: true`, so pipelines still start if
+the secret is missing — but then they fall back to unauthenticated calls and
+can hit rate limits again.
+
+Override the secret name with pipeline/task param `GITHUB_TOKEN_SECRET` if needed.
+
 
 ### Koku CI Management ###
 

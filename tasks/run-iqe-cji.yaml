@@ -106,11 +106,25 @@ spec:
       description: "Whether this is a scheduled test job or not"
       default: "false"
 
+    - name: GITHUB_TOKEN_SECRET
+      type: string
+      default: github-api-token
+      description: >-
+        Secret containing a GitHub PAT (key: token) used to fetch PR labels.
+        Optional; without it GitHub unauthenticated rate limits can cause HTTP 403.
+
   steps:
     - name: deploy-iqe-cji
       image: "$(params.BONFIRE_IMAGE)"
       timeout: "9h"
       env:
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: $(params.GITHUB_TOKEN_SECRET)
+              key: token
+              optional: true
+
         - name: OC_LOGIN_TOKEN
           valueFrom:
             secretKeyRef:

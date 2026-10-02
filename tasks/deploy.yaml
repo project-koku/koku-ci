@@ -68,10 +68,25 @@ spec:
 
     - name: PIPELINE_RUN_NAME
       type: string
+
+    - name: GITHUB_TOKEN_SECRET
+      type: string
+      default: github-api-token
+      description: >-
+        Secret containing a GitHub PAT (key: token) used by deploy.py to fetch
+        PR labels. Optional; without it GitHub unauthenticated rate limits
+        (60/h/IP) can cause HTTP 403 failures on the ephemeral cluster egress.
   steps:
     - name: deploy-application
       image: "$(params.BONFIRE_IMAGE)"
       env:
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: $(params.GITHUB_TOKEN_SECRET)
+              key: token
+              optional: true
+
         - name: APP_INTERFACE_USERNAME
           valueFrom:
             secretKeyRef:

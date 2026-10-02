@@ -4,6 +4,13 @@ kind: Task
 metadata:
   name: init-pipeline-context
 spec:
+  params:
+    - name: GITHUB_TOKEN_SECRET
+      type: string
+      default: github-api-token
+      description: >-
+        Secret containing a GitHub PAT (key: token) used to fetch PR labels.
+        Optional; without it GitHub unauthenticated rate limits can cause HTTP 403.
   results:
     - name: event-type
       description: The event type from PipelineRun annotations (push, pull_request, etc)
@@ -25,6 +32,12 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.annotations['pac.test.appstudio.openshift.io/branch']
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: $(params.GITHUB_TOKEN_SECRET)
+              key: token
+              optional: true
       script: |
         #!/bin/sh
         set -e
@@ -36,7 +49,16 @@ spec:
           exit 0
         fi
 
-        LABELS=$(curl -s https://api.github.com/repos/project-koku/koku/issues/$PR_NUMBER/labels | grep -o '"name": *"[^"]*"' | cut -d '"' -f4)
+        GH_URL="https://api.github.com/repos/project-koku/koku/issues/$PR_NUMBER/labels"
+        if [ -n "${GITHUB_TOKEN:-}" ]; then
+          LABELS=$(curl -sS -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            "$GH_URL" | grep -o '"name": *"[^"]*"' | cut -d '"' -f4)
+        else
+          echo "[WARN] GITHUB_TOKEN unset; using unauthenticated GitHub API (60 req/h/IP)."
+          LABELS=$(curl -sS -H "Accept: application/vnd.github+json" \
+            "$GH_URL" | grep -o '"name": *"[^"]*"' | cut -d '"' -f4)
+        fi
 
         echo "[INFO] PR Labels: $LABELS"
 
