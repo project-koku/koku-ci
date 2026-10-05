@@ -16,6 +16,13 @@ spec:
       description: "If 'true', skip the hold entirely (scheduled jobs may intentionally span midnight)"
       default: "false"
 
+    - name: GITHUB_TOKEN_SECRET
+      type: string
+      default: github-api-token
+      description: >-
+        Secret containing a GitHub PAT (key: token) used to fetch PR labels.
+        Optional; without it GitHub unauthenticated rate limits can cause HTTP 403.
+
   steps:
     - name: evaluate-midnight-hold
       image: curlimages/curl:latest
@@ -25,6 +32,13 @@ spec:
 
         - name: IQE_CJI_TIMEOUT
           value: $(params.IQE_CJI_TIMEOUT)
+
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: $(params.GITHUB_TOKEN_SECRET)
+              key: token
+              optional: true
 
         - name: PR_NUMBER
           valueFrom:
