@@ -72,6 +72,35 @@ make trigger
 make trigger JOB=onprem
 ```
 
+### Re-trigger Pull Request Integration Tests
+
+Use `koku-ci-rerun.py` to re-trigger an existing Konflux Snapshot without rebuilding
+the component. The helper is dry-run by default and prints the scenario it will
+re-trigger before applying any label.
+
+```bash
+# Resolve a failed GitHub check to its PipelineRun and Snapshot
+./koku-ci-rerun.py --pr 6385
+
+# Apply the Snapshot label after reviewing the dry-run output
+./koku-ci-rerun.py --pr 6385 --yes
+
+# Re-trigger a known PipelineRun or Snapshot directly
+./koku-ci-rerun.py --pipelinerun koku-ci-h2bzj
+./koku-ci-rerun.py --snapshot koku-20261016-094306-000
+
+# Re-trigger a different IntegrationTestScenario
+./koku-ci-rerun.py --snapshot koku-20261015-103109-000 \
+  --scenario koku-enterprise-contract \
+  --yes
+```
+
+The helper defaults to `koku-ci`. Pass `--scenario` for another
+IntegrationTestScenario. Very old PRs may resolve to a PipelineRun in
+KubeArchive but fail when labeling the Snapshot because Konflux periodically
+prunes old Snapshots. In that case, comment `/ok-to-test` on the PR to create a
+fresh Snapshot.
+
 ### Suspend / Resume
 
 ```bash
