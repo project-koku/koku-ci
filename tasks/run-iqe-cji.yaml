@@ -113,6 +113,14 @@ spec:
         Secret containing a GitHub PAT (key: token) used to fetch PR labels.
         Optional; without it GitHub unauthenticated rate limits can cause HTTP 403.
 
+    - name: MASU_ADMIN_TOKEN_SECRET
+      type: string
+      default: koku-masu-admin-token
+      description: >-
+        Secret containing the on-prem Masu admin shared secret (key: token)
+        forwarded by deploy-iqe-cji.py to the IQE pod (COST-8059). Optional;
+        when absent the token is not forwarded.
+
   steps:
     - name: deploy-iqe-cji
       image: "$(params.BONFIRE_IMAGE)"
@@ -122,6 +130,13 @@ spec:
           valueFrom:
             secretKeyRef:
               name: $(params.GITHUB_TOKEN_SECRET)
+              key: token
+              optional: true
+
+        - name: MASU_ADMIN_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: $(params.MASU_ADMIN_TOKEN_SECRET)
               key: token
               optional: true
 

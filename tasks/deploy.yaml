@@ -76,6 +76,15 @@ spec:
         Secret containing a GitHub PAT (key: token) used by deploy.py to fetch
         PR labels. Optional; without it GitHub unauthenticated rate limits
         (60/h/IP) can cause HTTP 403 failures on the ephemeral cluster egress.
+
+    - name: MASU_ADMIN_TOKEN_SECRET
+      type: string
+      default: koku-masu-admin-token
+      description: >-
+        Secret containing the on-prem Masu admin shared secret (key: token)
+        forwarded by deploy.py to the ephemeral Masu deployment (COST-8059).
+        Optional; when absent the token is not forwarded and the on-prem
+        Masu admin gate fails closed.
   steps:
     - name: deploy-application
       image: "$(params.BONFIRE_IMAGE)"
@@ -84,6 +93,13 @@ spec:
           valueFrom:
             secretKeyRef:
               name: $(params.GITHUB_TOKEN_SECRET)
+              key: token
+              optional: true
+
+        - name: MASU_ADMIN_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: $(params.MASU_ADMIN_TOKEN_SECRET)
               key: token
               optional: true
 
