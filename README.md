@@ -8,7 +8,46 @@ The integration tests tasks are run inside [koku-test-container] which contains 
 
 #### pipeline-build ####
 
-It's the main build pipeline for some of the repositories in Konflux. The repositories that reference this file are: `koku`, `koku-daily`, `koku-report-emailer`, `nise-populator` 
+It's the main build pipeline for some of the repositories in Konflux. The repositories that reference this file are: `koku`, `koku-daily`, `koku-report-emailer`, `nise-populator`, and the `koku-ci` component in this repo.
+
+**Build flow:** `prefetch-dependencies` → matrix `build-images` (`buildah-remote-oci-ta`, one TaskRun per platform) → `build-image-index` (manifest list) → image checks and tags. Post-build tasks use the **index** digest from `build-image-index`.
+
+**Multi-arch (on-prem):** SaaS and shared components keep the default single platform. Only on-prem operand builds should opt in to arm64.
+
+| Parameter | Default | Purpose |
+|-----------|---------|---------|
+| `build-platforms` | `["linux/x86_64"]` | Konflux `PLATFORM` list; use `linux/x86_64` and `linux/arm64` for on-prem multi-arch |
+| `build-image-index` | `"true"` | Assemble platforms into a manifest list at `output-image` |
+
+**On-prem opt-in** — in `project-koku/koku`, set on the `koku-onprem` pull-request and push `PipelineRun` only:
+
+```yaml
+- name: build-platforms
+  value:
+  - linux/x86_64
+  - linux/arm64
+```
+
+Leave other consumers unchanged so `koku`, `koku-daily`, etc. stay amd64-only.
+
+**Multi-Platform Controller (MPC):** arm64 builds use `buildah-remote-oci-ta` (remote VMs on `stone-prd-rh01`). Verify MPC before enabling arm64 on `koku-onprem`:
+
+```bash
+cd koku-ci-management && make login && eval $(make env)
+oc project cost-mgmt-dev-tenant
+oc get crd | rg -i multi
+oc get configmap build-pipeline-config -n cost-mgmt-dev-tenant -o yaml 2>/dev/null | rg -i multi-platform
+```
+
+After a successful multi-arch build:
+
+```bash
+docker buildx imagetools inspect quay.io/redhat-user-workloads/cost-mgmt-dev-tenant/koku-onprem:<tag>
+```
+
+Expect both `linux/amd64` and `linux/arm64`. Promote the **manifest-list** tag to `quay.io/project-koku/koku:<sha>` (not a single-arch child digest). See [multiarch_support.md](koku-ci-management/multiarch_support.md) for the full operator rollout checklist.
+
+**Rollback:** set `build-platforms: ["linux/x86_64"]` on a `PipelineRun` to disable arm64 without reverting this pipeline.
 
 #### basic_no_iqe ####
 
