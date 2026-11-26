@@ -16,6 +16,11 @@ spec:
       description: "If 'true', skip the hold entirely (scheduled jobs may intentionally span midnight)"
       default: "false"
 
+    - name: IQE_MARKER_EXPRESSION
+      type: string
+      description: "Marker set by the test scenario. When it selects the on-prem tests, the hold is skipped unless the PR has the 'require-on-prem-pr-check' label."
+      default: ""
+
     - name: GITHUB_TOKEN_SECRET
       type: string
       default: github-api-token
@@ -32,6 +37,9 @@ spec:
 
         - name: IQE_CJI_TIMEOUT
           value: $(params.IQE_CJI_TIMEOUT)
+
+        - name: IQE_MARKER_EXPRESSION
+          value: $(params.IQE_MARKER_EXPRESSION)
 
         - name: GITHUB_TOKEN
           valueFrom:
@@ -112,6 +120,14 @@ spec:
             exit 0
           fi
         done
+
+        # ── On-prem PR check only runs with the require-on-prem-pr-check label ────────
+        # Mirrors the skip in koku-test-container's deploy-iqe-cji.py.
+        if echo "${IQE_MARKER_EXPRESSION}" | grep -q "cost_ocp_on_prem" \
+            && ! echo "${LABELS}" | grep -qw "require-on-prem-pr-check"; then
+          echo "[midnight-hold] On-prem PR check without 'require-on-prem-pr-check' label — no IQE tests will run. Skipping hold."
+          exit 0
+        fi
 
         # ── Estimate job duration from PR label (empirical data — COST-7490) ───────
         # Fallback: parse IQE_CJI_TIMEOUT for unrecognised labels.

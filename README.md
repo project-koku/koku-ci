@@ -35,6 +35,7 @@ Only runs `bonfire deploy`.
 - Runs `bonfire deploy` then runs IQE tests
 - The IQE filter and marker are determined by the labels set on the PR
 - If the `ok-to-skip-smokes` label is set on a PR, IQE tests will **not** run
+- For the on-prem scenario (`IQE_MARKER_EXPRESSION` contains `cost_ocp_on_prem`), IQE tests only run on a PR if it has the `require-on-prem-pr-check` label
 
 ##### Parameters #####
 
