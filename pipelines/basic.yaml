@@ -185,6 +185,9 @@ spec:
         - name: IS_SCHEDULED_TEST_JOB
           value: "$(params.IS_SCHEDULED_TEST_JOB)"
 
+        - name: IQE_MARKER_EXPRESSION
+          value: "$(params.IQE_MARKER_EXPRESSION)"
+
       runAfter:
         - init-pipeline-context
 
