@@ -30,6 +30,10 @@ spec:
     description: Execute the build with network isolation
     type: string
     default: "false"
+  - name: build-source-image
+    description: Build a source image from the source and prefetched dependencies
+    type: string
+    default: "false"
   - name: prefetch-input
     description: Build dependencies to be prefetched by Cachi2
     type: string
@@ -114,6 +118,8 @@ spec:
       value: $(params.git-url)
     - name: revision
       value: $(params.revision)
+    - name: submodules
+      value: "true"
     - name: ociStorage
       value: $(params.output-image).git
     - name: ociArtifactExpiresAfter
@@ -152,7 +158,7 @@ spec:
       - name: name
         value: prefetch-dependencies-oci-ta
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-prefetch-dependencies-oci-ta:0.11.1@sha256:b57b0a2d0a017db019e2312e11298b317e0e943dd0a1dae008c5bf29f8c90a22
+        value: quay.io/konflux-ci/tekton-catalog/task-prefetch-dependencies-oci-ta:0.12.1@sha256:fed3eddb96bab130cace8d3aa794eeb651fa61ec358a9f1dbfaf01f6f0df669f
       - name: kind
         value: task
     workspaces:
@@ -209,6 +215,32 @@ spec:
         value: quay.io/konflux-ci/tekton-catalog/task-buildah-oci-ta:0.14.1@sha256:b4004deb8d3bc0aa2bd34eb1b40ed4353b76c1870d3d7b85828ad8f73786280e
       - name: kind
         value: task
+  - name: build-source-image
+    params:
+    - name: BINARY_IMAGE
+      value: $(tasks.build-container.results.IMAGE_URL)
+    - name: BINARY_IMAGE_DIGEST
+      value: $(tasks.build-container.results.IMAGE_DIGEST)
+    - name: SOURCE_ARTIFACT
+      value: $(tasks.prefetch-dependencies.results.SOURCE_ARTIFACT)
+    - name: PREFETCH_ARTIFACT
+      value: $(tasks.prefetch-dependencies.results.PREFETCH_ARTIFACT)
+    runAfter:
+    - build-container
+    taskRef:
+      resolver: bundles
+      params:
+      - name: name
+        value: source-build-oci-ta
+      - name: bundle
+        value: quay.io/konflux-ci/tekton-catalog/task-source-build-oci-ta:0.4.0@sha256:4bf27ae2f9de1da9f63258f8a6c2f31e34e7270d8ab1004e61f1abe0756f6948
+      - name: kind
+        value: task
+    when:
+    - input: $(params.build-source-image)
+      operator: in
+      values:
+      - "true"
   - name: deprecated-base-image-check
     params:
     - name: IMAGE_URL
